@@ -137,6 +137,8 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     { key = "demonicrune", cat = "potion", name = "Demonic Rune", id = 12662, nobuff = true },
     { key = "darkrune",    cat = "potion", name = "Dark Rune", id = 20520, nobuff = true },
     { key = "swiftness",   cat = "potion", name = "Swiftness Potion", id = 2459, nobuff = true },
+    { key = "invis",       cat = "potion", name = "Invisibility Potion", id = 9172, buff = { "invisibility" } },
+    { key = "lesserinvis", cat = "potion", name = "Lesser Invisibility Potion", id = 3823, buff = { "lesser invisibility" } },
     { key = "antivenom",   cat = "potion", name = "Powerful Anti-Venom", id = 19440, nobuff = true },
     { key = "jungleremedy",cat = "potion", name = "Jungle Remedy", id = 2633, nobuff = true },
     { key = "holywater",   cat = "potion", name = "Stratholme Holy Water", id = 13180, nobuff = true },
