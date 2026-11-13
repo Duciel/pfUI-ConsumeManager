@@ -261,6 +261,15 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     return found
   end
 
+  -- items in a bag slot. 1.12 reports an item with charges (oils, stones...) as a
+  -- negative count = -charges: that is one item. Returns icon, items, charges / stack size
+  local function SlotCount(bag, slot)
+    local icon, count = GetContainerItemInfo(bag, slot)
+    count = count or 1
+    if count < 0 then return icon, 1, -count end
+    return icon, count, count
+  end
+
   local function ScanBags()
     bags = {}
     for bag = 0, 4 do
@@ -272,13 +281,13 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
           id = tonumber(id)
           local item = MatchItem(id, name)
           if item then
-            local icon, count = GetContainerItemInfo(bag, slot)
+            local icon, count = SlotCount(bag, slot)
             local b = bags[item]
             if not b then
               b = { count = 0, bag = bag, slot = slot, icon = icon }
               bags[item] = b
             end
-            b.count = b.count + (count or 1)
+            b.count = b.count + count
             if id and not item.id then DB().ids[item.key] = id end
           end
         end
@@ -286,17 +295,24 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     end
   end
 
+  -- the slot to use: the one with the fewest charges (oils, stones) or the smallest stack,
+  -- so partly used items go first
   local function FindSlot(item)
+    local bestBag, bestSlot, best
     for bag = 0, 4 do
       for slot = 1, GetContainerNumSlots(bag) or 0 do
         local link = GetContainerItemLink(bag, slot)
         if link then
           local _, _, id = string.find(link, "item:(%d+)")
           local _, _, name = string.find(link, "%[(.+)%]")
-          if MatchItem(tonumber(id), name) == item then return bag, slot end
+          if MatchItem(tonumber(id), name) == item then
+            local _, _, left = SlotCount(bag, slot)
+            if not best or left < best then bestBag, bestSlot, best = bag, slot, left end
+          end
         end
       end
     end
+    return bestBag, bestSlot
   end
 
   local iconCache = {}

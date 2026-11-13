@@ -40,7 +40,8 @@ Frost Power, Fortitude, Major Troll's Blood, Demonslaying), concoctions and prot
 - grey icon: the buff is missing; red icon: none in your bags
 - **glow**: every buff-bar button (groups, elixirs, concoctions...) pulses while its buff is missing or
   about to run out. Protection potions and the potion bar never glow.
-- bottom right: how many you carry; cooldown wheel for potions
+- bottom right: how many you carry (items with charges such as oils count as one each); cooldown wheel for potions
+- using an item takes the one with the fewest charges left (oils, stones) or the smallest stack first
 
 *Hide buttons while their buff is up* turns the bar into a "what am I missing" bar. Potions and protection
 potions are never hidden that way (they are used on demand).
