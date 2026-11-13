@@ -587,8 +587,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
   -- group buttons are never hidden by "hide while up": their list is the way to change the default
   local function Hidden(entry)
     if entry.group then
-      -- no default and none carried: nothing to show (pick one in the config dropdown)
-      if not entry.item and GroupCount(entry.cat) == 0 then return true end
+      -- "Show" ticked: the button is there, default or not (only "hide what you don't carry" hides it)
       return cfg.hidemissing == "1" and GroupCount(entry.cat) == 0
     end
     if cfg.hidemissing == "1" and Count(entry.item) == 0 then return true end
@@ -602,7 +601,8 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     for _, item in ipairs(CatItems(entry.cat)) do
       if Count(item) > 0 then return Icon(item) end
     end
-    return UNKNOWN_ICON
+    local first = CatItems(entry.cat)[1]
+    return first and Icon(first) or UNKNOWN_ICON
   end
 
   local function UseNextMissing()

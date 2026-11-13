@@ -14,8 +14,8 @@ first, red 0 for the others):
 button shows the default; left-click it to use the default. Right-clicking the bar button pins the list open.
 
 The group button shows its default. Without a default
-it is greyed out and shows how many of the group you carry; a group with no default and nothing in your bags
-has no button. The *Show* checkbox next to each group's dropdown in the config hides a group (Off Hand and Tea are off by default), and
+it is greyed out and shows how many of the group you carry. A group whose *Show* box is ticked always has a
+button, default or not (unless *Hide consumables you don't carry* is on and you carry none of it). The *Show* checkbox next to each group's dropdown in the config hides a group (Off Hand and Tea are off by default), and
 the default can also be picked in the config dropdowns or with `/cm set`.
 
 | Group | Items |

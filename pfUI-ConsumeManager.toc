@@ -2,7 +2,7 @@
 ## Title: |cff33ffccpf|rUI |cffffffffConsume Manager
 ## Author: Duciel
 ## Notes: Raid consumables bar for pfUI: one button per stackable consumable, one hover list per exclusive group (flask, food, weapon oil...).
-## Version: 1.5.1
+## Version: 1.5.2
 ## Dependencies: pfUI
 ## SavedVariables: pfConsumeManagerDB
 consumemanager.lua
