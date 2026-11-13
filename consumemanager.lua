@@ -187,6 +187,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     pot_showbg    = "1",
     hideup    = "0",          -- hide buttons whose buff is up (persistent buffs only)
     hidemissing = "0",        -- hide buttons of consumables you don't carry
+    glowmouse = "0",          -- no glow while the mouse is over the button
     glowwhen  = "always",     -- buff-bar buttons glow while their buff is missing: always / group / raid / instance / never
     refresh   = "2",          -- minutes: a buff with less left counts as missing (0 = only when gone)
     count     = "1",
@@ -967,6 +968,12 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     b.glow.tex:SetVertexColor(1, .82, .1)
     b.glow.tex:SetAllPoints(b.glow)
     b.glow:SetScript("OnUpdate", function()
+      -- option: no glow while the mouse is over the button or its open list
+      local button = this:GetParent()
+      if cfg.glowmouse == "1" and (MouseIsOver(button) or (button.fly:IsShown() and MouseIsOver(button.fly))) then
+        this.tex:SetAlpha(0)
+        return
+      end
       this.tex:SetAlpha(.55 + .45 * math.sin(GetTime() * 6))
     end)
     b.glow:Hide()
@@ -1507,6 +1514,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
       CreateConfig(update, "Hide In Combat", cfg, "hidecombat", "checkbox")
       CreateConfig(update, "Show The Bar", cfg, "showwhen", "dropdown", showwhen)
       CreateConfig(update, "Glow When A Buff Is Missing", cfg, "glowwhen", "dropdown", glowwhen)
+      CreateConfig(update, "Stop Glowing On Mouseover", cfg, "glowmouse", "checkbox")
 
       -- header with a "Show" caption over the column of Show checkboxes
       local function ShowHeader(text)
