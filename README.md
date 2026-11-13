@@ -15,7 +15,7 @@ button shows the default; left-click it to use the default. Right-clicking the b
 
 The group button **glows** while its default's buff is not on you (or is about to run out). Without a default
 it is greyed out and shows how many of the group you carry; a group with no default and nothing in your bags
-has no button. *Show <group> button* in the config hides a group (Off Hand and Tea are off by default), and
+has no button. The *Show* checkbox next to each group's dropdown in the config hides a group (Off Hand and Tea are off by default), and
 the default can also be picked in the config dropdowns or with `/cm set`.
 
 | Group | Items |

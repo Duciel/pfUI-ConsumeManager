@@ -1244,12 +1244,39 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
       CreateConfig(update, "Enable Consume Manager", cfg, "enable", "checkbox")
       CreateConfig(update, "Show The Bar", cfg, "showwhen", "dropdown", showwhen)
 
-      CreateConfig(nil, "Exclusive (Only One At A Time)", nil, nil, "header")
-      CreateConfig(update, "Glow When The Default's Buff Is Missing", cfg, "glow", "checkbox")
+      -- one line per group: name, default dropdown, then a "Show" checkbox after the dropdown
+      local header = CreateConfig(nil, "Exclusive (Only One At A Time)", nil, nil, "header")
+      if header then
+        header.showcap = header:CreateFontString(nil, "OVERLAY", "GameFontWhite")
+        header.showcap:SetFont(pfUI.font_default, C.global.font_size)
+        header.showcap:SetTextColor(.2, 1, .8, 1)
+        header.showcap:SetPoint("BOTTOM", header, "BOTTOMRIGHT", -12, 0)
+        header.showcap:SetText("Show")
+      end
       for _, cat in ipairs(CATS) do
         if cat.excl then
-          CreateConfig(update, "Show " .. cat.label .. " Button", cfg, "show_" .. cat.key, "checkbox")
-          CreateConfig(update, cat.label .. " Default", cfg, "sel_" .. cat.key, "dropdown", Values(cat))
+          local row = CreateConfig(update, cat.label, cfg, "sel_" .. cat.key, "dropdown", Values(cat))
+          if row and row.input then
+            local showkey = "show_" .. cat.key
+            row.input:ClearAllPoints()
+            row.input:SetPoint("RIGHT", row, "RIGHT", -26, 0)
+
+            local cb = CreateFrame("CheckButton", nil, row, "UICheckButtonTemplate")
+            cb:SetNormalTexture("")
+            cb:SetPushedTexture("")
+            cb:SetHighlightTexture("")
+            CreateBackdrop(cb, nil, true)
+            cb:SetWidth(14)
+            cb:SetHeight(14)
+            cb:SetPoint("RIGHT", row, "RIGHT", -5, 1)
+            if cfg[showkey] == "1" then cb:SetChecked(1) else cb:SetChecked(nil) end
+            cb:SetScript("OnClick", function()
+              cfg[showkey] = this:GetChecked() and "1" or "0"
+              update()
+            end)
+            if cb.backdrop_shadow then cb.backdrop_shadow:Hide() end
+            row.showbox = cb
+          end
         end
       end
 
@@ -1264,6 +1291,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
 
       CreateConfig(nil, "Behaviour", nil, nil, "header")
       CreateConfig(update, "Refresh When Less Than X Minutes Left (0 = only when gone)", cfg, "refresh")
+      CreateConfig(update, "Glow Group Buttons When The Default's Buff Is Missing", cfg, "glow", "checkbox")
       CreateConfig(update, "Hide Stackable Buttons While Their Buff Is Up", cfg, "hideup", "checkbox")
       CreateConfig(update, "Hide Consumables You Don't Carry", cfg, "hidemissing", "checkbox")
 
