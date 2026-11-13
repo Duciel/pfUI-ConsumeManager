@@ -37,9 +37,9 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     { key = "elixir",      label = "Elixirs",                               auto = true },
     { key = "blasted",     label = "Blasted Lands",                         excl = true, auto = true },
     { key = "concoction",  label = "Concoctions",                           auto = true },
-    { key = "tea",         label = "Tea",                                   excl = true },
     { key = "protection",  label = "Protection Potions" },
     { key = "regenfood",   label = "Regen Food",                            excl = true, potionbar = true },
+    { key = "runetea",     label = "Runes & Tea",                           excl = true, potionbar = true },
     { key = "potion",      label = "Potions & Utility",                     potionbar = true },
   }
 
@@ -115,9 +115,6 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     { key = "emeraldmongoose", cat = "concoction", name = "Concoction of the Emerald Mongoose" },
     { key = "dreamwater",  cat = "concoction", name = "Concoction of the Dreamwater" },
     { key = "arcanegiant", cat = "concoction", name = "Concoction of the Arcane Giant" },
-    -- tea (instant, one or the other)
-    { key = "nordanaar",   cat = "tea", name = "Nordanaar Herbal Tea", nobuff = true },
-    { key = "sugartea",    cat = "tea", name = "Tea With Sugar", nobuff = true },
     -- protection potions
     { key = "gfpp",        cat = "protection", name = "Greater Fire Protection Potion", id = 13457, buff = { "fire protection" } },
     { key = "gfrpp",       cat = "protection", name = "Greater Frost Protection Potion", id = 13456, buff = { "frost protection" } },
@@ -130,6 +127,11 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     { key = "manaorange",  cat = "regenfood", name = "Conjured Mana Orange", nobuff = true },
     { key = "kezancake",   cat = "regenfood", name = "Juicy Kezan Fruitcake", nobuff = true },
     { key = "graccu",      cat = "regenfood", name = "Graccu's Mince Meat Fruitcake", id = 21215, nobuff = true },
+    -- runes & tea (instant mana, one at a time)
+    { key = "demonicrune", cat = "runetea", name = "Demonic Rune", id = 12662, nobuff = true },
+    { key = "darkrune",    cat = "runetea", name = "Dark Rune", id = 20520, nobuff = true },
+    { key = "nordanaar",   cat = "runetea", name = "Nordanaar Herbal Tea", nobuff = true },
+    { key = "sugartea",    cat = "runetea", name = "Tea With Sugar", nobuff = true },
     -- potions & utility
     { key = "stoneshield", cat = "potion", name = "Greater Stoneshield Potion", id = 13455, buff = { "greater stoneshield" } },
     { key = "freeaction",  cat = "potion", name = "Free Action Potion", id = 5634, buff = { "free action" } },
@@ -139,8 +141,6 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     { key = "majorheal",   cat = "potion", name = "Major Healing Potion", id = 13446, nobuff = true },
     { key = "majormana",   cat = "potion", name = "Major Mana Potion", id = 13444, nobuff = true },
     { key = "rejuv",       cat = "potion", name = "Major Rejuvenation Potion", id = 18253, nobuff = true },
-    { key = "demonicrune", cat = "potion", name = "Demonic Rune", id = 12662, nobuff = true },
-    { key = "darkrune",    cat = "potion", name = "Dark Rune", id = 20520, nobuff = true },
     { key = "swiftness",   cat = "potion", name = "Swiftness Potion", id = 2459, nobuff = true },
     { key = "invis",       cat = "potion", name = "Invisibility Potion", id = 9172, buff = { "invisibility" } },
     { key = "lesserinvis", cat = "potion", name = "Lesser Invisibility Potion", id = 3823, buff = { "lesser invisibility" } },
@@ -201,7 +201,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
   for _, cat in ipairs(CATS) do
     if cat.excl then
       defaults["sel_" .. cat.key] = NONE
-      defaults["show_" .. cat.key] = (cat.key == "offhand" or cat.key == "tea") and "0" or "1"
+      defaults["show_" .. cat.key] = (cat.key == "offhand") and "0" or "1"
     else
       for _, item in ipairs(CatItems(cat)) do defaults["use_" .. item.key] = "0" end
     end

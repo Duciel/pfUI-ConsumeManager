@@ -15,7 +15,7 @@ button shows the default; left-click it to use the default. Right-clicking the b
 
 The group button shows its default. Without a default
 it is greyed out and shows how many of the group you carry. A group whose *Show* box is ticked always has a
-button, default or not (unless *Hide consumables you don't carry* is on and you carry none of it). The *Show* checkbox next to each group's dropdown in the config hides a group (Off Hand and Tea are off by default), and
+button, default or not (unless *Hide consumables you don't carry* is on and you carry none of it). The *Show* checkbox next to each group's dropdown in the config hides a group (Off Hand is off by default), and
 the default can also be picked in the config dropdowns or with `/cm set`.
 
 | Group | Items |
@@ -28,7 +28,6 @@ the default can also be picked in the config dropdowns or with `/cm set`.
 | Attack Power | Winterfall Firewater, Juju Might |
 | Main Hand / Off Hand | Brilliant Wizard / Mana Oil, Elemental / Consecrated / Dense Sharpening Stone, Blessed Wizard Oil, Frost Oil, Shadow Oil, Dense Weightstone |
 | Blasted Lands | Ground Scorpok Assay, R.O.I.D.S., Cerebral Cortex Compound, Lung Juice Cocktail, Gizzard Gum |
-| Tea | Nordanaar Herbal Tea, Tea With Sugar |
 
 **Stackable** consumables each get a checkbox and their own button: elixirs (Mongoose, Greater Arcane,
 Superior Defense, Mageblood, Dreamshard, Dreamtonic, Greater Firepower, Greater Nature Power, Shadow Power,
@@ -49,11 +48,12 @@ Frost Power, Fortitude, Major Troll's Blood, Demonslaying), concoctions and prot
 potions are never hidden that way (they are used on demand).
 
 ## Potion bar
-*Potions & Utility* (healing / mana potions, runes, Stoneshield, Free Action, LIP, Quickness, Restorative,
+*Potions & Utility* (healing / mana potions, Stoneshield, Free Action, LIP, Quickness, Restorative,
 Swiftness, Invisibility / Lesser Invisibility, Anti-Venom, Jungle Remedy, Holy Water, bandages, Frozen Rune...) are used reactively, so they have
 their own bar, shown **all the time** by default, in and out of combat (or *In Combat Only*). Tick the ones you want under *Potion Bar* in the
-config. **Regen Food** (Conjured Mana Orange, Juicy Kezan Fruitcake, Graccu's Mince Meat Fruitcake: one at a
-time) is an exclusive group on the potion bar, with a default dropdown and a hover list like the food group.
+config. **Regen Food** (Conjured Mana Orange, Juicy Kezan Fruitcake, Graccu's Mince Meat Fruitcake) and **Runes & Tea** (Demonic Rune, Dark Rune,
+Nordanaar Herbal Tea, Tea With Sugar) are exclusive groups on the potion bar, with a default dropdown and a
+hover list like the food group.
 The potion bar has its own layout options (size, columns / rows, direction).
 
 The buff bar has **Hide In Combat** (on by default) at the top of the config, so in a fight you only see the
