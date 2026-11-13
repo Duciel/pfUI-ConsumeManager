@@ -39,7 +39,8 @@ Frost Power, Fortitude, Major Troll's Blood, Demonslaying) and protection potion
 - orange border: the buff has less than *Refresh when less than X minutes left* (default 2)
 - grey icon: the buff is missing; red icon: none in your bags
 - **glow** (*Glow When A Buff Is Missing*, at the top of the config: always / in a group / in a raid / in an
-  instance / never; *Stop Glowing On Mouseover* hides it while you hover the button or its list): every
+  instance / never; *Acknowledge Glow On Mouseover* makes a hover stop a button's glow like a
+  notification, until that buff has been up again and goes missing again): every
   buff-bar button (groups, elixirs...) pulses while its buff is missing or
   about to run out, as long as you have some in your bags (out of stock stays red, no glow). Protection
   potions and the potion bar never glow.
