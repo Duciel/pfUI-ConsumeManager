@@ -30,13 +30,13 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     { key = "food",        label = "Food",                                  excl = true, auto = true, anybuff = { "well fed" } },
     { key = "drink",       label = "Alcohol",                               excl = true, auto = true },
     { key = "zanza",       label = "Zanza",                                 excl = true, auto = true },
-    { key = "strength",    label = "Strength (Giants / Juju Power)",        excl = true, auto = true },
-    { key = "attackpower", label = "Attack Power (Firewater / Juju Might)", excl = true, auto = true },
+    { key = "strength",    label = "Strength (Giants / Juju / Arcane Giant)", excl = true, auto = true },
+    { key = "attackpower", label = "Attack Power (Firewater / Juju / Dreamwater)", excl = true, auto = true },
+    { key = "agility",     label = "Agility (Mongoose)",                    excl = true, auto = true },
     { key = "mainhand",    label = "Main Hand",                             excl = true, auto = true, weapon = 16, items = "weapon" },
     { key = "offhand",     label = "Off Hand",                              excl = true, auto = true, weapon = 17, items = "weapon" },
     { key = "elixir",      label = "Elixirs",                               auto = true },
     { key = "blasted",     label = "Blasted Lands",                         excl = true, auto = true },
-    { key = "concoction",  label = "Concoctions",                           auto = true },
     { key = "protection",  label = "Protection Potions" },
     { key = "regenfood",   label = "Regen Food",                            excl = true, potionbar = true },
     { key = "runetea",     label = "Runes & Tea",                           excl = true, potionbar = true },
@@ -78,9 +78,14 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     -- strength
     { key = "giants",      cat = "strength", name = "Elixir of Giants", id = 9206, buff = { "elixir of the giants" } },
     { key = "jujupower",   cat = "strength", name = "Juju Power", id = 12451 },
+    { key = "arcanegiant", cat = "strength", name = "Concoction of the Arcane Giant" },
     -- attack power
     { key = "firewater",   cat = "attackpower", name = "Winterfall Firewater", id = 12820 },
     { key = "jujumight",   cat = "attackpower", name = "Juju Might", id = 12460 },
+    { key = "dreamwater",  cat = "attackpower", name = "Concoction of the Dreamwater" },
+    -- agility
+    { key = "mongoose",    cat = "agility", name = "Elixir of the Mongoose", id = 13452 },
+    { key = "emeraldmongoose", cat = "agility", name = "Concoction of the Emerald Mongoose" },
     -- weapon (main hand / off hand share this list)
     { key = "wizardoil",   cat = "weapon", name = "Brilliant Wizard Oil", id = 20749 },
     { key = "manaoil",     cat = "weapon", name = "Brilliant Mana Oil", id = 20748 },
@@ -92,7 +97,6 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     { key = "densestone",  cat = "weapon", name = "Dense Sharpening Stone", id = 12404 },
     { key = "denseweight", cat = "weapon", name = "Dense Weightstone", id = 12643 },
     -- elixirs
-    { key = "mongoose",    cat = "elixir", name = "Elixir of the Mongoose", id = 13452 },
     { key = "gae",         cat = "elixir", name = "Greater Arcane Elixir", id = 13454 },
     { key = "superdef",    cat = "elixir", name = "Elixir of Superior Defense", id = 13445, buff = { "greater armor" } },
     { key = "mageblood",   cat = "elixir", name = "Mageblood Potion", id = 20007, buff = { "mana regeneration" } },
@@ -111,10 +115,6 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     { key = "cortex",      cat = "blasted", name = "Cerebral Cortex Compound", id = 8423, buff = { "infallible mind" } },
     { key = "lungjuice",   cat = "blasted", name = "Lung Juice Cocktail", id = 8411, buff = { "spirit of boar" } },
     { key = "gizzard",     cat = "blasted", name = "Gizzard Gum", id = 8424, buff = { "spiritual domination" } },
-    -- concoctions (Turtle WoW, each one is two elixirs in one)
-    { key = "emeraldmongoose", cat = "concoction", name = "Concoction of the Emerald Mongoose" },
-    { key = "dreamwater",  cat = "concoction", name = "Concoction of the Dreamwater" },
-    { key = "arcanegiant", cat = "concoction", name = "Concoction of the Arcane Giant" },
     -- protection potions
     { key = "gfpp",        cat = "protection", name = "Greater Fire Protection Potion", id = 13457, buff = { "fire protection" } },
     { key = "gfrpp",       cat = "protection", name = "Greater Frost Protection Potion", id = 13456, buff = { "frost protection" } },
@@ -224,6 +224,17 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
   if not DB().potalways then
     DB().potalways = true
     cfg.pot_showwhen = "always"
+  end
+
+  -- 1.9.0: Mongoose and the concoctions moved into groups: a ticked one becomes the group's default
+  if not DB().groups190 then
+    DB().groups190 = true
+    for _, pair in ipairs({ { "mongoose", "agility" }, { "emeraldmongoose", "agility" },
+                            { "arcanegiant", "strength" }, { "dreamwater", "attackpower" } }) do
+      if cfg["use_" .. pair[1]] == "1" and (cfg["sel_" .. pair[2]] or NONE) == NONE then
+        cfg["sel_" .. pair[2]] = pair[1]
+      end
+    end
   end
 
   local function Print(msg)

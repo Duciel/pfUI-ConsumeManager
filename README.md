@@ -24,20 +24,21 @@ the default can also be picked in the config dropdowns or with `/cm set`.
 | Food | Le Fishe Au Chocolat, Dirge's Chimaerok Chops, Empowering Herbal Salad, Nightfin Soup, Sour Mountain Berries, Squid Eel Skewer, Grilled Squid, Power Mushroom, Hardened Mushroom, Smoked Desert Dumplings, Mightfish Steak, Danonzo's Tel'Abim Delight / Surprise, Runn Tum Tuber Surprise |
 | Alcohol | Rumsey Rum Black Label, Medivh's Merlot, Medivh's Merlot Blue |
 | Zanza | Spirit, Swiftness, Sheen of Zanza |
-| Strength | Elixir of Giants, Juju Power |
-| Attack Power | Winterfall Firewater, Juju Might |
+| Strength | Elixir of Giants, Juju Power, Concoction of the Arcane Giant |
+| Attack Power | Winterfall Firewater, Juju Might, Concoction of the Dreamwater |
+| Agility | Elixir of the Mongoose, Concoction of the Emerald Mongoose |
 | Main Hand / Off Hand | Brilliant Wizard / Mana Oil, Elemental / Consecrated / Dense Sharpening Stone, Blessed Wizard Oil, Frost Oil, Shadow Oil, Dense Weightstone |
 | Blasted Lands | Ground Scorpok Assay, R.O.I.D.S., Cerebral Cortex Compound, Lung Juice Cocktail, Gizzard Gum |
 
-**Stackable** consumables each get a checkbox and their own button: elixirs (Mongoose, Greater Arcane,
+**Stackable** consumables each get a checkbox and their own button: elixirs (Greater Arcane,
 Superior Defense, Mageblood, Dreamshard, Dreamtonic, Greater Firepower, Greater Nature Power, Shadow Power,
-Frost Power, Fortitude, Major Troll's Blood, Demonslaying), concoctions and protection potions. Potions & Utility go on the potion bar (below).
+Frost Power, Fortitude, Major Troll's Blood, Demonslaying) and protection potions. Potions & Utility go on the potion bar (below).
 
 ## The buttons
 - green border + timer: the buff is up
 - orange border: the buff has less than *Refresh when less than X minutes left* (default 2)
 - grey icon: the buff is missing; red icon: none in your bags
-- **glow**: every buff-bar button (groups, elixirs, concoctions...) pulses while its buff is missing or
+- **glow**: every buff-bar button (groups, elixirs...) pulses while its buff is missing or
   about to run out, as long as you have some in your bags (out of stock stays red, no glow). Protection
   potions and the potion bar never glow.
 - bottom right: how many you carry; for items with charges (oils, stones) the total charges left; cooldown
@@ -83,7 +84,7 @@ X minutes left*. Food is skipped in combat (you can't eat).
 | --- | --- |
 | `/cm food` | your default food |
 | `/cm weapon` | the main hand, then the off hand enchant |
-| `/cm all` | everything else on the buff bar: flask, alcohol, Zanza, strength / attack power, Blasted Lands, elixirs, concoctions |
+| `/cm all` | everything else on the buff bar: flask, alcohol, Zanza, strength / attack power / agility, Blasted Lands, elixirs |
 | `/cm food weapon all` | any combination, in the order you write it (`/cm weapon,food` works too) |
 | `/cm next` | everything, in bar order (same as the key binding) |
 
