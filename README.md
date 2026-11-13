@@ -71,19 +71,46 @@ up right after). `/cm forget <item>` forgets a learned buff.
 Turtle WoW custom items have no item id in the addon: they are found by name (exact, or the start of the
 name, so *Medivh's Merlot Blue* also finds *Medivh's Merlot Blue Label*), and their id is remembered.
 
+## Macros
+Each command uses **one** missing item per key press (the game won't take more), so press it until
+nothing is missing. A buff counts as missing when it is not on you or has less than *Refresh when less than
+X minutes left*. Food is skipped in combat (you can't eat).
+
+| Macro | Uses |
+| --- | --- |
+| `/cm food` | your default food |
+| `/cm weapon` | the main hand, then the off hand enchant |
+| `/cm all` | everything else on the buff bar: flask, alcohol, Zanza, strength / attack power, Blasted Lands, elixirs, concoctions |
+| `/cm food weapon all` | any combination, in the order you write it (`/cm weapon,food` works too) |
+| `/cm next` | everything, in bar order (same as the key binding) |
+
+## Lua API (for other addons and `/run`)
+| Function | Returns |
+| --- | --- |
+| `pfConsumeManager.UseFood()` | `true, itemName` when it used something, `false` otherwise |
+| `pfConsumeManager.UseWeapon()` | same |
+| `pfConsumeManager.UseAll()` | same |
+| `pfConsumeManager.UseNext(spec)` | same; `spec` = `nil` (everything), `"food,weapon"` or `{ "food", "all" }` |
+| `pfConsumeManager.GetMissing(spec)` | list of `{ name, category, kind, count, left }` (`left` = `false` when not on you, else the seconds left) |
+| `pfConsumeManager.IsReady(spec)` | `true` when nothing of `spec` is missing |
+| `pfConsumeManager.Use(name)` | use an item by name, e.g. `"mongoose"` |
+| `pfConsumeManager.Select(group, name)` | set a group's default, e.g. `("flask", "titans")`, `("food", "none")` |
+| `pfConsumeManager.Refresh()` | rebuild the bars |
+
+`kind` is `"food"`, `"weapon"` or `"all"`. Example:
+`/run if not pfConsumeManager.UseNext("weapon,food") then CastSpellByName("Arcane Intellect") end`
+
 ## Commands
 `/consumemanager` (aliases `/cm`, `/consumes`)
 
 | Command | Effect |
 | --- | --- |
-| `/cm next` | use the first missing persistent buff |
+| `/cm next` / `food` / `weapon` / `all` | use a missing buff (see Macros) |
 | `/cm use <item>` | e.g. `/cm use mongoose` |
 | `/cm set <group> <item\|none>` | e.g. `/cm set flask titans`, `/cm set mainhand wizard`, `/cm set food none` |
 | `/cm missing` / `list` | list missing buffs / the whole selection |
 | `/cm forget [item]` | forget learned buffs |
 | `/cm scan` | rescan your bags |
-
-For macros: `pfConsumeManager.UseNext()` returns `true, itemName` when it used something.
 
 Config: `/pfui` → Thirdparty → Consume Manager (bar shown always / in a group / in a raid / in an instance,
 layout: buttons per row, or a fixed number of rows and the columns follow...). Move the bar with pfUI's unlock mode.

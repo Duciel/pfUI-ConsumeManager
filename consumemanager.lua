@@ -607,14 +607,77 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     return first and Icon(first) or UNKNOWN_ICON
   end
 
-  local function UseNextMissing()
-    for _, entry in ipairs(Wanted(false)) do
-      local item, cat = entry.item, entry.cat
-      if item and cat.auto and Count(item) > 0 then
-        local left = BuffLeft(item, cat)
-        if left ~= nil and not IsFresh(left) then
-          if Use(item, cat) then return true, item.name end
+  -- [[ kinds, for macros and other addons ]] --
+  -- food   = the food group's default
+  -- weapon = main hand / off hand enchants
+  -- all    = every other persistent buff of the buff bar (flask, elixirs, Blasted Lands...)
+  local KIND_ALIASES = {
+    food = "food", foods = "food",
+    weapon = "weapon", weapons = "weapon", oil = "weapon", oils = "weapon", enchant = "weapon", enchants = "weapon",
+    all = "all", buffs = "all", buff = "all", consumes = "all", elixirs = "all",
+  }
+
+  local function KindOf(cat)
+    if cat.key == "food" then return "food" end
+    if cat.weapon then return "weapon" end
+    return "all"
+  end
+
+  -- "food,weapon all" / { "food", "weapon" } -> { "food", "weapon" }; nil / "" -> nil (everything);
+  -- second return: the words that are not a kind
+  local function ParseKinds(spec)
+    if spec == nil then return nil end
+    local words = {}
+    if type(spec) == "table" then
+      for _, w in ipairs(spec) do table.insert(words, w) end
+    else
+      for w in string.gfind(tostring(spec), "[^%s,;/]+") do table.insert(words, w) end
+    end
+    if table.getn(words) == 0 then return nil end
+    local kinds, bad, seen = {}, {}, {}
+    for _, w in ipairs(words) do
+      local k = KIND_ALIASES[string.lower(w)]
+      if k and not seen[k] then
+        seen[k] = true
+        table.insert(kinds, k)
+      elseif not k then
+        table.insert(bad, w)
+      end
+    end
+    return kinds, bad
+  end
+
+  -- persistent buffs of the buff bar that are missing / about to run out, for the given kinds
+  -- (nil = all kinds, bar order; else the kinds' order). Food is skipped in combat (you can't eat).
+  local function Missing(kinds)
+    local list, out = Wanted(false), {}
+    local function add(kind)
+      for _, entry in ipairs(list) do
+        local item, cat = entry.item, entry.cat
+        if item and cat.auto and (not kind or KindOf(cat) == kind) then
+          local left = BuffLeft(item, cat)
+          if left ~= nil and not IsFresh(left) then
+            table.insert(out, { item = item, cat = cat, left = left, kind = KindOf(cat) })
+          end
         end
+      end
+    end
+    if kinds then
+      for _, k in ipairs(kinds) do add(k) end
+    else
+      add(nil)
+    end
+    return out
+  end
+
+  -- uses the first missing buff you carry (one item per call: one per key press)
+  -- returns true, item name when it used something; false otherwise
+  local function UseNextMissing(spec)
+    local kinds = ParseKinds(spec)
+    local combat = UnitAffectingCombat("player")
+    for _, m in ipairs(Missing(kinds)) do
+      if Count(m.item) > 0 and not (combat and m.kind == "food") then
+        if Use(m.item, m.cat) then return true, m.item.name end
       end
     end
     return false
@@ -1243,7 +1306,24 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     return true, cat, item
   end
 
+  -- use the first missing buff: spec = nil (everything) or kinds, e.g. "food,weapon" / { "all" }
   _G.pfConsumeManager.UseNext = UseNextMissing
+  _G.pfConsumeManager.UseFood = function() return UseNextMissing("food") end
+  _G.pfConsumeManager.UseWeapon = function() return UseNextMissing("weapon") end
+  _G.pfConsumeManager.UseAll = function() return UseNextMissing("all") end
+  -- list of what is missing: { { name, category, kind, count, left }, ... }
+  -- left: false = not on you, seconds = about to run out (below the refresh setting)
+  _G.pfConsumeManager.GetMissing = function(spec)
+    local out = {}
+    for _, m in ipairs(Missing(ParseKinds(spec))) do
+      table.insert(out, { name = m.item.name, category = m.cat.label, kind = m.kind, count = Count(m.item), left = m.left })
+    end
+    return out
+  end
+  -- true when nothing of the given kinds is missing
+  _G.pfConsumeManager.IsReady = function(spec)
+    return table.getn(Missing(ParseKinds(spec))) == 0
+  end
   _G.pfConsumeManager.Use = function(name)
     local item = FindItem(name or "")
     if not item then return false end
@@ -1262,8 +1342,17 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     cmd = string.lower(cmd or "")
 
     if cmd == "next" then
-      local ok, name = UseNextMissing()
+      -- /cm next [food weapon all]
+      local kinds, bad = ParseKinds(rest)
+      if bad and bad[1] then Print("unknown: " .. table.concat(bad, ", ") .. " (use food, weapon, all)") return end
+      local ok = UseNextMissing(kinds)
       if not ok then Print("nothing missing.") end
+    elseif KIND_ALIASES[(string.gsub(cmd, "[,;/].*$", ""))] then
+      -- /cm food, /cm weapon, /cm all, /cm food weapon all, /cm food,weapon
+      local kinds, bad = ParseKinds(msg)
+      if bad and bad[1] then Print("unknown: " .. table.concat(bad, ", ") .. " (use food, weapon, all)") return end
+      local ok = UseNextMissing(kinds)
+      if not ok then Print("nothing missing (" .. table.concat(kinds, ", ") .. ").") end
     elseif cmd == "use" then
       if not _G.pfConsumeManager.Use(rest) then Print("can't use '" .. rest .. "'.") end
     elseif cmd == "set" then
@@ -1305,6 +1394,10 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     else
       Print("commands:")
       DEFAULT_CHAT_FRAME:AddMessage("  /cm next |cffaaaaaa- use the first persistent buff you are missing")
+      DEFAULT_CHAT_FRAME:AddMessage("  /cm food |cffaaaaaa- eat your default food if its buff is missing")
+      DEFAULT_CHAT_FRAME:AddMessage("  /cm weapon |cffaaaaaa- apply the missing main hand / off hand enchant")
+      DEFAULT_CHAT_FRAME:AddMessage("  /cm all |cffaaaaaa- every other missing buff of the bar (flask, elixirs...)")
+      DEFAULT_CHAT_FRAME:AddMessage("  /cm food weapon all |cffaaaaaa- any combination, in that order")
       DEFAULT_CHAT_FRAME:AddMessage("  /cm use <item> |cffaaaaaa- e.g. /cm use mongoose")
       DEFAULT_CHAT_FRAME:AddMessage("  /cm set <group> <item|none> |cffaaaaaa- e.g. /cm set flask titans, /cm set food none")
       DEFAULT_CHAT_FRAME:AddMessage("  /cm missing |cffaaaaaa- list missing buffs")
