@@ -1,0 +1,3 @@
+<Bindings>
+  <Binding name="PFCONSUMEMANAGER_NEXT" header="PFCONSUMEMANAGER">pfConsumeManager.UseNext()</Binding>
+</Bindings>
