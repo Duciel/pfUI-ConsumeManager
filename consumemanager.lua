@@ -9,7 +9,7 @@
 --   * stackable consumables (elixirs, protection potions...) get one button each
 --   * a button is lit (coloured border, timer) while its buff is on you and dimmed while it is missing
 --   * "use next missing" (key binding / macro) uses the first persistent buff you are missing
---   * potions & utility (used reactively) live on their own bar, shown in combat by default
+--   * potions & utility (used reactively) live on their own bar, which stays up in combat
 --
 -- Buff detection uses nampower when it is there (item spell ids -> aura spell ids), the buff names
 -- otherwise. Buffs that can't be guessed are learned the first time you use the item from the bar.
@@ -168,7 +168,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     showwhen  = "always",     -- always / group / raid / instance
     -- potion bar (Potions & Utility)
     pot_enable    = "1",
-    pot_showwhen  = "combat", -- always / combat
+    pot_showwhen  = "always", -- always / combat
     pot_size      = "30",
     pot_spacing   = "2",
     pot_perrow    = "12",
@@ -211,6 +211,12 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     pfConsumeManagerDB.ids = pfConsumeManagerDB.ids or {}
     pfConsumeManagerDB.learned = pfConsumeManagerDB.learned or {}
     return pfConsumeManagerDB
+  end
+
+  -- 1.4.1: the potion bar is shown out of combat too (1.4.0 saved "combat" as its default)
+  if not DB().potalways then
+    DB().potalways = true
+    cfg.pot_showwhen = "always"
   end
 
   local function Print(msg)
@@ -1316,8 +1322,8 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     end
 
     local potwhen = {
-      "combat:In Combat",
       "always:Always",
+      "combat:In Combat Only",
     }
 
     local update = function() RefreshAll() end
