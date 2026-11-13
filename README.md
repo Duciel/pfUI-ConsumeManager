@@ -75,7 +75,7 @@ name, so *Medivh's Merlot Blue* also finds *Medivh's Merlot Blue Label*), and th
 For macros: `pfConsumeManager.UseNext()` returns `true, itemName` when it used something.
 
 Config: `/pfui` → Thirdparty → Consume Manager (bar shown always / in a group / in a raid / in an instance,
-layout, buttons per row...). Move the bar with pfUI's unlock mode.
+layout: buttons per row, or a fixed number of rows and the columns follow...). Move the bar with pfUI's unlock mode.
 
 ## Install
 Copy the `pfUI-ConsumeManager` folder into `Interface\AddOns`. Requires [pfUI](https://github.com/brues-code/pfUI).

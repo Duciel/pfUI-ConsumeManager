@@ -172,7 +172,8 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     timer     = "1",
     size      = "30",
     spacing   = "2",
-    perrow    = "12",
+    perrow    = "12",         -- buttons per line
+    rows      = "0",          -- number of lines (0 = use buttons per line)
     direction = "HORIZONTAL",
     flyout    = "TOP",
     hover     = "1",
@@ -896,9 +897,19 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
 
     local size = tonumber(cfg.size) or 30
     local spacing = tonumber(cfg.spacing) or 2
-    local perrow = math.max(tonumber(cfg.perrow) or 12, 1)
     local horizontal = cfg.direction ~= "VERTICAL"
     self.size, self.spacing = size, spacing
+
+    -- buttons per line: from "Rows" when set, else "Buttons Per Row"
+    local total = 0
+    if ShouldShow() then
+      for _, entry in ipairs(list) do
+        if not Hidden(entry) then total = total + 1 end
+      end
+    end
+    local perrow = math.max(tonumber(cfg.perrow) or 12, 1)
+    local rows = tonumber(cfg.rows) or 0
+    if rows > 0 then perrow = math.max(math.ceil(total / math.floor(rows)), 1) end
 
     local shown = 0
     if ShouldShow() then
@@ -1298,7 +1309,8 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
       CreateConfig(nil, T["Layout"], nil, nil, "header")
       CreateConfig(update, T["Button Size"], cfg, "size")
       CreateConfig(update, T["Spacing"], cfg, "spacing", "dropdown", pfUI.gui.dropdowns.spacing)
-      CreateConfig(update, "Buttons Per Row", cfg, "perrow")
+      CreateConfig(update, "Buttons Per Row (Columns)", cfg, "perrow")
+      CreateConfig(update, "Rows (0 = use Buttons Per Row)", cfg, "rows")
       CreateConfig(update, T["Bar Direction"], cfg, "direction", "dropdown", pfUI.gui.dropdowns.orientation)
       CreateConfig(update, "List Direction", cfg, "flyout", "dropdown", positions)
       CreateConfig(update, "Open List On Mouseover", cfg, "hover", "checkbox")
