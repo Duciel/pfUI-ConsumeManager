@@ -39,7 +39,8 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     { key = "concoction",  label = "Concoctions",                           auto = true },
     { key = "tea",         label = "Tea",                                   excl = true },
     { key = "protection",  label = "Protection Potions" },
-    { key = "potion",      label = "Potions & Utility" },
+    { key = "regenfood",   label = "Regen Food",                            excl = true, potionbar = true },
+    { key = "potion",      label = "Potions & Utility",                     potionbar = true },
   }
 
   -- name = English item name (matched exactly, or as the start of the item name),
@@ -125,6 +126,10 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     { key = "gapp",        cat = "protection", name = "Greater Arcane Protection Potion", id = 13461, buff = { "arcane protection" } },
     { key = "ghpp",        cat = "protection", name = "Greater Holy Protection Potion", id = 13460, buff = { "holy protection" } },
     { key = "magicres",    cat = "protection", name = "Magic Resistance Potion", id = 9036, buff = { "resistance" } },
+    -- regen food (instant restores, one at a time)
+    { key = "manaorange",  cat = "regenfood", name = "Conjured Mana Orange", nobuff = true },
+    { key = "kezancake",   cat = "regenfood", name = "Juicy Kezan Fruitcake", nobuff = true },
+    { key = "graccu",      cat = "regenfood", name = "Graccu's Mince Meat Fruitcake", id = 21215, nobuff = true },
     -- potions & utility
     { key = "stoneshield", cat = "potion", name = "Greater Stoneshield Potion", id = 13455, buff = { "greater stoneshield" } },
     { key = "freeaction",  cat = "potion", name = "Free Action Potion", id = 5634, buff = { "free action" } },
@@ -134,9 +139,6 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     { key = "majorheal",   cat = "potion", name = "Major Healing Potion", id = 13446, nobuff = true },
     { key = "majormana",   cat = "potion", name = "Major Mana Potion", id = 13444, nobuff = true },
     { key = "rejuv",       cat = "potion", name = "Major Rejuvenation Potion", id = 18253, nobuff = true },
-    { key = "manaorange",  cat = "potion", name = "Conjured Mana Orange", nobuff = true },
-    { key = "kezancake",   cat = "potion", name = "Juicy Kezan Fruitcake", nobuff = true },
-    { key = "graccu",      cat = "potion", name = "Graccu's Mince Meat Fruitcake", id = 21215, nobuff = true },
     { key = "demonicrune", cat = "potion", name = "Demonic Rune", id = 12662, nobuff = true },
     { key = "darkrune",    cat = "potion", name = "Dark Rune", id = 20520, nobuff = true },
     { key = "swiftness",   cat = "potion", name = "Swiftness Potion", id = 2459, nobuff = true },
@@ -561,14 +563,13 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
   end
 
   -- the potion bar holds this category, the buff bar everything else
-  local POTION_CAT = "potion"
 
   -- every button a bar should have, in order: { cat, item }
   -- potion = true: potion bar, false: buff bar, nil: both
   local function Wanted(potion)
     local list = {}
     for _, cat in ipairs(CATS) do
-      if potion ~= nil and (cat.key == POTION_CAT) ~= potion then
+      if potion ~= nil and (cat.potionbar and true or false) ~= potion then
         -- other bar
       elseif cat.excl then
         -- a group button is there even without a default: its list is where you pick one
@@ -1454,17 +1455,20 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
       CreateConfig(update, "Hide In Combat", cfg, "hidecombat", "checkbox")
       CreateConfig(update, "Show The Bar", cfg, "showwhen", "dropdown", showwhen)
 
-      -- one line per group: name, default dropdown, then a "Show" checkbox after the dropdown
-      local header = CreateConfig(nil, "Exclusive (Only One At A Time)", nil, nil, "header")
-      if header then
-        header.showcap = header:CreateFontString(nil, "OVERLAY", "GameFontWhite")
-        header.showcap:SetFont(pfUI.font_default, C.global.font_size)
-        header.showcap:SetTextColor(.2, 1, .8, 1)
-        header.showcap:SetPoint("BOTTOM", header, "BOTTOMRIGHT", -12, 0)
-        header.showcap:SetText("Show")
+      -- header with a "Show" caption over the column of Show checkboxes
+      local function ShowHeader(text)
+        local header = CreateConfig(nil, text, nil, nil, "header")
+        if header then
+          header.showcap = header:CreateFontString(nil, "OVERLAY", "GameFontWhite")
+          header.showcap:SetFont(pfUI.font_default, C.global.font_size)
+          header.showcap:SetTextColor(.2, 1, .8, 1)
+          header.showcap:SetPoint("BOTTOM", header, "BOTTOMRIGHT", -12, 0)
+          header.showcap:SetText("Show")
+        end
       end
-      for _, cat in ipairs(CATS) do
-        if cat.excl then
+
+      -- one line per group: name, default dropdown, then a "Show" checkbox after the dropdown
+      local function GroupRow(cat)
           local row = CreateConfig(update, cat.label, cfg, "sel_" .. cat.key, "dropdown", Values(cat))
           if row and row.input then
             local showkey = "show_" .. cat.key
@@ -1487,11 +1491,15 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
             if cb.backdrop_shadow then cb.backdrop_shadow:Hide() end
             row.showbox = cb
           end
-        end
+      end
+
+      ShowHeader("Exclusive (Only One At A Time)")
+      for _, cat in ipairs(CATS) do
+        if cat.excl and not cat.potionbar then GroupRow(cat) end
       end
 
       for _, cat in ipairs(CATS) do
-        if not cat.excl and cat.key ~= POTION_CAT then
+        if not cat.excl and not cat.potionbar then
           CreateConfig(nil, cat.label, nil, nil, "header")
           for _, item in ipairs(CatItems(cat)) do
             CreateConfig(update, item.name, cfg, "use_" .. item.key, "checkbox")
@@ -1518,11 +1526,20 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
       CreateConfig(update, T["Show Background"], cfg, "showbg", "checkbox")
 
       -- potion bar: used reactively during fights
-      CreateConfig(nil, "Potion Bar (" .. catByKey[POTION_CAT].label .. ")", nil, nil, "header")
+      CreateConfig(nil, "Potion Bar", nil, nil, "header")
       CreateConfig(update, "Enable Potion Bar", cfg, "pot_enable", "checkbox")
       CreateConfig(update, "Show The Potion Bar", cfg, "pot_showwhen", "dropdown", potwhen)
-      for _, item in ipairs(CatItems(catByKey[POTION_CAT])) do
-        CreateConfig(update, item.name, cfg, "use_" .. item.key, "checkbox")
+      ShowHeader("Potion Bar: Exclusive")
+      for _, cat in ipairs(CATS) do
+        if cat.excl and cat.potionbar then GroupRow(cat) end
+      end
+      for _, cat in ipairs(CATS) do
+        if not cat.excl and cat.potionbar then
+          CreateConfig(nil, "Potion Bar: " .. cat.label, nil, nil, "header")
+          for _, item in ipairs(CatItems(cat)) do
+            CreateConfig(update, item.name, cfg, "use_" .. item.key, "checkbox")
+          end
+        end
       end
 
       CreateConfig(nil, "Potion Bar Layout", nil, nil, "header")
@@ -1531,6 +1548,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
       CreateConfig(update, "Buttons Per Row (Columns)", cfg, "pot_perrow")
       CreateConfig(update, "Rows (0 = use Buttons Per Row)", cfg, "pot_rows")
       CreateConfig(update, T["Bar Direction"], cfg, "pot_direction", "dropdown", pfUI.gui.dropdowns.orientation)
+      CreateConfig(update, "List Direction", cfg, "pot_flyout", "dropdown", positions)
       CreateConfig(update, T["Show Background"], cfg, "pot_showbg", "checkbox")
     end)
   end
