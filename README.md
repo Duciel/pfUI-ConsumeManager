@@ -13,7 +13,7 @@ first, red 0 for the others):
 **left-click** uses it, **right-click** makes it the group's **default** (green outline in the list). The bar
 button shows the default; left-click it to use the default. Right-clicking the bar button pins the list open.
 
-The group button **glows** while its default's buff is not on you (or is about to run out). Without a default
+The group button shows its default. Without a default
 it is greyed out and shows how many of the group you carry; a group with no default and nothing in your bags
 has no button. The *Show* checkbox next to each group's dropdown in the config hides a group (Off Hand and Tea are off by default), and
 the default can also be picked in the config dropdowns or with `/cm set`.
@@ -38,6 +38,8 @@ Frost Power, Fortitude, Major Troll's Blood, Demonslaying), concoctions and prot
 - green border + timer: the buff is up
 - orange border: the buff has less than *Refresh when less than X minutes left* (default 2)
 - grey icon: the buff is missing; red icon: none in your bags
+- **glow**: every buff-bar button (groups, elixirs, concoctions...) pulses while its buff is missing or
+  about to run out. Protection potions and the potion bar never glow.
 - bottom right: how many you carry; cooldown wheel for potions
 
 *Hide buttons while their buff is up* turns the bar into a "what am I missing" bar. Potions and protection

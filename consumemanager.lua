@@ -5,7 +5,7 @@
 --     hover it to open the list of every item of that group, with how many you carry:
 --       left-click  -> use it
 --       right-click -> make it the group's default (the one the bar button uses)
---     the group button glows while the default's buff is not on you
+--   * buff-bar buttons glow while their buff is not on you
 --   * stackable consumables (elixirs, protection potions...) get one button each
 --   * a button is lit (coloured border, timer) while its buff is on you and dimmed while it is missing
 --   * "use next missing" (key binding / macro) uses the first persistent buff you are missing
@@ -178,7 +178,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     pot_showbg    = "1",
     hideup    = "0",          -- hide buttons whose buff is up (persistent buffs only)
     hidemissing = "0",        -- hide buttons of consumables you don't carry
-    glow      = "1",          -- group buttons glow while the default's buff is missing
+    glow      = "1",          -- buff-bar buttons glow while their buff is missing
     refresh   = "2",          -- minutes: a buff with less left counts as missing (0 = only when gone)
     count     = "1",
     timer     = "1",
@@ -1074,7 +1074,9 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
 
     if b.state ~= state or b.lastcount ~= n then
       b.state, b.lastcount = state, n
-      if entry.group and cfg.glow == "1" and (state == "missing" or state == "low") then
+      -- glow: buff-bar buttons of buffs you keep up (not the potion bar, not protection potions)
+      if cfg.glow == "1" and cat.auto and not b:GetParent().potion
+        and (state == "missing" or state == "low") then
         b.glow:Show()
       else
         b.glow:Hide()
@@ -1382,7 +1384,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
 
       CreateConfig(nil, "Behaviour", nil, nil, "header")
       CreateConfig(update, "Refresh When Less Than X Minutes Left (0 = only when gone)", cfg, "refresh")
-      CreateConfig(update, "Glow Group Buttons When The Default's Buff Is Missing", cfg, "glow", "checkbox")
+      CreateConfig(update, "Glow Buttons When Their Buff Is Missing", cfg, "glow", "checkbox")
       CreateConfig(update, "Hide Stackable Buttons While Their Buff Is Up", cfg, "hideup", "checkbox")
       CreateConfig(update, "Hide Consumables You Don't Carry", cfg, "hidemissing", "checkbox")
 
