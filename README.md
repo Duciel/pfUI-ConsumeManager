@@ -38,7 +38,8 @@ Frost Power, Fortitude, Major Troll's Blood, Demonslaying) and protection potion
 - green border + timer: the buff is up
 - orange border: the buff has less than *Refresh when less than X minutes left* (default 2)
 - grey icon: the buff is missing; red icon: none in your bags
-- **glow**: every buff-bar button (groups, elixirs...) pulses while its buff is missing or
+- **glow** (*Glow When A Buff Is Missing*, at the top of the config: always / in a group / in a raid / in an
+  instance / never): every buff-bar button (groups, elixirs...) pulses while its buff is missing or
   about to run out, as long as you have some in your bags (out of stock stays red, no glow). Protection
   potions and the potion bar never glow.
 - bottom right: how many you carry; for items with charges (oils, stones) the total charges left; cooldown

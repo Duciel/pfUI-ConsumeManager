@@ -187,7 +187,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     pot_showbg    = "1",
     hideup    = "0",          -- hide buttons whose buff is up (persistent buffs only)
     hidemissing = "0",        -- hide buttons of consumables you don't carry
-    glow      = "1",          -- buff-bar buttons glow while their buff is missing
+    glowwhen  = "always",     -- buff-bar buttons glow while their buff is missing: always / group / raid / instance / never
     refresh   = "2",          -- minutes: a buff with less left counts as missing (0 = only when gone)
     count     = "1",
     timer     = "1",
@@ -238,6 +238,10 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
       end
     end
   end
+
+  -- 1.10.0: the glow checkbox became a dropdown
+  if cfg.glow == "0" and not DB().glow1100 then cfg.glowwhen = "never" end
+  DB().glow1100 = true
 
   local function Print(msg)
     DEFAULT_CHAT_FRAME:AddMessage(PREFIX .. msg)
@@ -728,6 +732,21 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     return UnitAffectingCombat("player") and true or false
   end
 
+  -- never / always / group / raid / instance
+  local function Where(when)
+    if when == "never" then return false end
+    if when == "raid" then return GetNumRaidMembers() > 0 end
+    if when == "group" then return (GetNumRaidMembers() > 0 or GetNumPartyMembers() > 0) end
+    if when == "instance" then
+      if IsInInstance then
+        local inside = IsInInstance()
+        return inside and true or false
+      end
+      return GetNumRaidMembers() > 0
+    end
+    return true
+  end
+
   -- pfUI unlock mode: keep every bar visible so it can be moved
   local function Unlocked()
     return pfUI.unlock and pfUI.unlock:IsShown() and true or false
@@ -741,17 +760,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     end
     if cfg.enable ~= "1" then return false end
     if cfg.hidecombat == "1" and InCombat() then return false end
-    local when = cfg.showwhen
-    if when == "raid" then return GetNumRaidMembers() > 0 end
-    if when == "group" then return (GetNumRaidMembers() > 0 or GetNumPartyMembers() > 0) end
-    if when == "instance" then
-      if IsInInstance then
-        local inside = IsInInstance()
-        return inside and true or false
-      end
-      return GetNumRaidMembers() > 0
-    end
-    return true
+    return Where(cfg.showwhen)
   end
 
   -- [[ the bars ]] --
@@ -1194,11 +1203,12 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     elseif IsFresh(left) then state = "up"
     else state = "low" end
 
-    if b.state ~= state or b.lastcount ~= n then
-      b.state, b.lastcount = state, n
+    local glowon = Where(cfg.glowwhen)
+    if b.state ~= state or b.lastcount ~= n or b.lastglow ~= glowon then
+      b.state, b.lastcount, b.lastglow = state, n, glowon
       -- glow: buff-bar buttons of buffs you keep up (not the potion bar, not protection potions)
       -- (out of stock: no glow, the icon stays red)
-      if cfg.glow == "1" and cat.auto and not b:GetParent().potion and n > 0
+      if Where(cfg.glowwhen) and cat.auto and not b:GetParent().potion and n > 0
         and (state == "missing" or state == "low") then
         b.glow:Show()
       else
@@ -1476,6 +1486,13 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
       end
     end
 
+    local glowwhen = {
+      "always:Always",
+      "group:In A Group",
+      "raid:In A Raid",
+      "instance:In An Instance",
+      "never:Never",
+    }
     local potwhen = {
       "always:Always",
       "combat:In Combat Only",
@@ -1489,6 +1506,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
       CreateConfig(update, "Enable Consume Manager (Buff Bar)", cfg, "enable", "checkbox")
       CreateConfig(update, "Hide In Combat", cfg, "hidecombat", "checkbox")
       CreateConfig(update, "Show The Bar", cfg, "showwhen", "dropdown", showwhen)
+      CreateConfig(update, "Glow When A Buff Is Missing", cfg, "glowwhen", "dropdown", glowwhen)
 
       -- header with a "Show" caption over the column of Show checkboxes
       local function ShowHeader(text)
@@ -1544,7 +1562,6 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
 
       CreateConfig(nil, "Behaviour", nil, nil, "header")
       CreateConfig(update, "Refresh When Less Than X Minutes Left (0 = only when gone)", cfg, "refresh")
-      CreateConfig(update, "Glow Buttons When Their Buff Is Missing", cfg, "glow", "checkbox")
       CreateConfig(update, "Hide Stackable Buttons While Their Buff Is Up", cfg, "hideup", "checkbox")
       CreateConfig(update, "Hide Consumables You Don't Carry", cfg, "hidemissing", "checkbox")
 
