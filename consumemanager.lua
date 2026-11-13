@@ -2,9 +2,10 @@
 -- A pfUI third-party module (modelled on pfUI-TotemBar / pfUI-PaladinBar) that keeps your raid
 -- consumables on one bar:
 --   * exclusive consumables (one flask, one food, one weapon oil...) get ONE button per group;
---     hover it to open the list of that group:
+--     hover it to open the list of every item of that group, with how many you carry:
 --       left-click  -> use it
---       right-click -> make it the active one of the group
+--       right-click -> make it the group's default (the one the bar button uses)
+--     the group button glows while the default's buff is not on you
 --   * stackable consumables (elixirs, Blasted Lands buffs, protection potions...) get one button each
 --   * a button is lit (coloured border, timer) while its buff is on you and dimmed while it is missing
 --   * "use next missing" (key binding / macro) uses the first persistent buff you are missing
@@ -58,6 +59,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     { key = "squideel",    cat = "food", name = "Squid Eel Skewer" },
     { key = "grilledsquid",cat = "food", name = "Grilled Squid", id = 13928 },
     { key = "mushroom",    cat = "food", name = "Power Mushroom" },
+    { key = "hardmushroom",cat = "food", name = "Hardened Mushroom", id = 51717 },
     { key = "dumplings",   cat = "food", name = "Smoked Desert Dumplings", id = 20452 },
     { key = "mightfish",   cat = "food", name = "Mightfish Steak" },
     { key = "delight",     cat = "food", name = "Danonzo's Tel'Abim Delight" },
@@ -164,6 +166,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     showwhen  = "always",     -- always / group / raid / instance
     hideup    = "0",          -- hide buttons whose buff is up (persistent buffs only)
     hidemissing = "0",        -- hide buttons of consumables you don't carry
+    glow      = "1",          -- group buttons glow while the default's buff is missing
     refresh   = "2",          -- minutes: a buff with less left counts as missing (0 = only when gone)
     count     = "1",
     timer     = "1",
@@ -178,6 +181,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
   for _, cat in ipairs(CATS) do
     if cat.excl then
       defaults["sel_" .. cat.key] = NONE
+      defaults["show_" .. cat.key] = (cat.key == "offhand" or cat.key == "tea") and "0" or "1"
     else
       for _, item in ipairs(CatItems(cat)) do defaults["use_" .. item.key] = "0" end
     end
@@ -519,8 +523,10 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     local list = {}
     for _, cat in ipairs(CATS) do
       if cat.excl then
-        local item = Selected(cat)
-        if item then table.insert(list, { cat = cat, item = item, group = true }) end
+        -- a group button is there even without a default: its list is where you pick one
+        if cfg["show_" .. cat.key] == "1" then
+          table.insert(list, { cat = cat, item = Selected(cat), group = true })
+        end
       else
         for _, item in ipairs(CatItems(cat)) do
           if Enabled(item) then table.insert(list, { cat = cat, item = item }) end
@@ -530,16 +536,38 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     return list
   end
 
+  -- how many items of the group you carry
+  local function GroupCount(cat)
+    local n = 0
+    for _, item in ipairs(CatItems(cat)) do n = n + Count(item) end
+    return n
+  end
+
+  -- group buttons are never hidden by "hide while up": their list is the way to change the default
   local function Hidden(entry)
+    if entry.group then
+      -- no default and none carried: nothing to show (pick one in the config dropdown)
+      if not entry.item and GroupCount(entry.cat) == 0 then return true end
+      return cfg.hidemissing == "1" and GroupCount(entry.cat) == 0
+    end
     if cfg.hidemissing == "1" and Count(entry.item) == 0 then return true end
     if cfg.hideup == "1" and entry.cat.auto and IsFresh(BuffLeft(entry.item, entry.cat)) then return true end
     return false
   end
 
+  -- bar button icon: the default, or (no default) the first item of the group you carry
+  local function EntryIcon(entry)
+    if entry.item then return Icon(entry.item) end
+    for _, item in ipairs(CatItems(entry.cat)) do
+      if Count(item) > 0 then return Icon(item) end
+    end
+    return UNKNOWN_ICON
+  end
+
   local function UseNextMissing()
     for _, entry in ipairs(Wanted()) do
       local item, cat = entry.item, entry.cat
-      if cat.auto and Count(item) > 0 then
+      if item and cat.auto and Count(item) > 0 then
         local left = BuffLeft(item, cat)
         if left ~= nil and not IsFresh(left) then
           if Use(item, cat) then return true, item.name end
@@ -580,6 +608,14 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
 
   local function ShowTooltip(button, item, cat, main)
     GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
+    if not item and main then
+      GameTooltip:SetText(cat.label, 1, .82, 0)
+      GameTooltip:AddLine("No default chosen.", 1, 1, 1)
+      GameTooltip:AddLine("Hover the button and right-click one in the list.", .7, .7, .7)
+      GameTooltip:AddDoubleLine("Left / right-click", "Pin the list", 1, 1, 1, .2, 1, .8)
+      GameTooltip:Show()
+      return
+    end
     if not item then
       GameTooltip:SetText(T["None"], 1, .33, .33)
       GameTooltip:AddLine("Right-click: hide the " .. cat.label .. " button", 1, 1, 1)
@@ -609,7 +645,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
       GameTooltip:AddDoubleLine("Left-click", "Use", 1, 1, 1, .2, 1, .8)
     else
       GameTooltip:AddDoubleLine("Left-click", "Use", 1, 1, 1, .2, 1, .8)
-      GameTooltip:AddDoubleLine("Right-click", "Set as active " .. cat.label, 1, 1, 1, .2, 1, .8)
+      GameTooltip:AddDoubleLine("Right-click", "Set as default " .. cat.label, 1, 1, 1, .2, 1, .8)
     end
     GameTooltip:Show()
   end
@@ -677,7 +713,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
   local function MainOnClick()
     local entry = this.entry
     if not entry then return end
-    if arg1 == "RightButton" then
+    if arg1 == "RightButton" or (entry.group and not entry.item) then
       if entry.group then
         local fly = this.fly
         if fly:IsShown() and fly.pinned then
@@ -732,6 +768,20 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     b.count:SetFont(pfUI.font_default, C.global.font_size, "OUTLINE")
     b.count:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", -2, 3)
     b.count:SetJustifyH("RIGHT")
+
+    -- pulsing glow (group buttons whose default buff is missing)
+    b.glow = CreateFrame("Frame", nil, b)
+    b.glow:SetFrameLevel(b:GetFrameLevel() + 6)
+    b.glow:SetPoint("CENTER", b, "CENTER", 0, 0)
+    b.glow.tex = b.glow:CreateTexture(nil, "OVERLAY")
+    b.glow.tex:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
+    b.glow.tex:SetBlendMode("ADD")
+    b.glow.tex:SetVertexColor(1, .82, .1)
+    b.glow.tex:SetAllPoints(b.glow)
+    b.glow:SetScript("OnUpdate", function()
+      this.tex:SetAlpha(.55 + .45 * math.sin(GetTime() * 6))
+    end)
+    b.glow:Hide()
 
     b:SetScript("OnClick", MainOnClick)
     b:SetScript("OnEnter", MainOnEnter)
@@ -800,7 +850,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
         local n = Count(list[i])
         f.icon:SetTexture(Icon(list[i]))
         if n > 0 then f.icon:SetVertexColor(1, 1, 1) else f.icon:SetVertexColor(.35, .35, .35) end
-        f.count:SetText(n > 0 and n or "")
+        f.count:SetText(n > 0 and n or "|cffff33330")
       end
       if (not isNone and list[i] == chosen) then
         f:SetBackdropBorderColor(COLOR_UP[1], COLOR_UP[2], COLOR_UP[3], 1)
@@ -835,7 +885,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
   local function LayoutSig(list)
     local sig = ShouldShow() and "1" or "0"
     for _, entry in ipairs(list) do
-      if not Hidden(entry) then sig = sig .. entry.item.key .. "," end
+      if not Hidden(entry) then sig = sig .. entry.cat.key .. ":" .. (entry.item and entry.item.key or NONE) .. "," end
     end
     return sig
   end
@@ -861,8 +911,10 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
           b:SetHeight(size)
           b.cdbg:SetWidth(size - 3)
           b.cdbg:SetHeight(size - 3)
-          b.icon:SetTexture(Icon(entry.item))
-          b.tvalue, b.cvalue, b.state = nil, nil, nil   -- force a redraw on the next tick
+          b.icon:SetTexture(EntryIcon(entry))
+          b.glow:SetWidth(size * 1.9)
+          b.glow:SetHeight(size * 1.9)
+          b.tvalue, b.cvalue, b.state, b.lastcount = nil, nil, nil, nil   -- force a redraw on the next tick
           local idx = shown - 1
           local line, col = math.floor(idx / perrow), idx - math.floor(idx / perrow) * perrow
           local x = spacing + (horizontal and col or line) * (size + spacing)
@@ -877,6 +929,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     for i = shown + 1, table.getn(self.buttons) do
       local b = self.buttons[i]
       b.entry = nil
+      b.glow:Hide()
       b.fly.pinned = nil
       b.fly:Hide()
       b:Hide()
@@ -917,6 +970,23 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
   local function UpdateButton(b)
     local entry = b.entry
     local item, cat = entry.item, entry.cat
+
+    if not item then
+      -- group without a default: total of the group, greyed out
+      local n = GroupCount(cat)
+      SetText(b.count, b, "cvalue", (cfg.count == "1" and (n > 0 and tostring(n) or "|cffff33330")) or nil)
+      SetText(b.timer, b, "tvalue", nil)
+      if b.state ~= "nodefault" then
+        b.state = "nodefault"
+        DefaultBorder(b)
+        b.icon:SetVertexColor(.4, .4, .4)
+        b.glow:Hide()
+        CooldownFrame_SetTimer(b.cd, 0, 0, 0)
+        b.cdstart, b.cdduration = 0, 0
+      end
+      return
+    end
+
     local n = Count(item)
     local left = BuffLeft(item, cat)
 
@@ -932,6 +1002,11 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
 
     if b.state ~= state or b.lastcount ~= n then
       b.state, b.lastcount = state, n
+      if entry.group and cfg.glow == "1" and (state == "missing" or state == "low") then
+        b.glow:Show()
+      else
+        b.glow:Hide()
+      end
       if state == "up" then
         b:SetBackdropBorderColor(COLOR_UP[1], COLOR_UP[2], COLOR_UP[3], 1)
         b.icon:SetVertexColor(1, 1, 1)
@@ -1014,7 +1089,8 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
       ScanBags()
       for _, b in ipairs(bar.buttons) do
         if b.entry and b:IsShown() then
-          b.icon:SetTexture(Icon(b.entry.item))
+          b.icon:SetTexture(EntryIcon(b.entry))
+          b.state = nil
           if b.fly:IsShown() then bar:BuildFlyout(b) end
         end
       end
@@ -1096,8 +1172,10 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     elseif cmd == "missing" or cmd == "list" then
       local any
       for _, entry in ipairs(Wanted()) do
-        local left = BuffLeft(entry.item, entry.cat)
-        if cmd == "list" or (entry.cat.auto and left ~= nil and not IsFresh(left)) then
+        local left = entry.item and BuffLeft(entry.item, entry.cat)
+        if not entry.item then
+          if cmd == "list" then any = true Print(entry.cat.label .. ": no default") end
+        elseif cmd == "list" or (entry.cat.auto and left ~= nil and not IsFresh(left)) then
           any = true
           local state = (left == nil and "") or (left == false and " |cffff5555missing")
             or (left > 0 and (" |cff33ff66" .. FormatTime(left))) or " |cff33ff66up"
@@ -1167,9 +1245,11 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
       CreateConfig(update, "Show The Bar", cfg, "showwhen", "dropdown", showwhen)
 
       CreateConfig(nil, "Exclusive (Only One At A Time)", nil, nil, "header")
+      CreateConfig(update, "Glow When The Default's Buff Is Missing", cfg, "glow", "checkbox")
       for _, cat in ipairs(CATS) do
         if cat.excl then
-          CreateConfig(update, cat.label, cfg, "sel_" .. cat.key, "dropdown", Values(cat))
+          CreateConfig(update, "Show " .. cat.label .. " Button", cfg, "show_" .. cat.key, "checkbox")
+          CreateConfig(update, cat.label .. " Default", cfg, "sel_" .. cat.key, "dropdown", Values(cat))
         end
       end
 
@@ -1184,7 +1264,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
 
       CreateConfig(nil, "Behaviour", nil, nil, "header")
       CreateConfig(update, "Refresh When Less Than X Minutes Left (0 = only when gone)", cfg, "refresh")
-      CreateConfig(update, "Hide Buttons While Their Buff Is Up", cfg, "hideup", "checkbox")
+      CreateConfig(update, "Hide Stackable Buttons While Their Buff Is Up", cfg, "hideup", "checkbox")
       CreateConfig(update, "Hide Consumables You Don't Carry", cfg, "hidemissing", "checkbox")
 
       CreateConfig(nil, T["Layout"], nil, nil, "header")

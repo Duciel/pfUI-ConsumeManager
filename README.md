@@ -7,15 +7,21 @@ The list comes from the Oathsworn *Raid Consumables & Items Guide* (general raid
 Naxxramas and Kara40 extras).
 
 ## Exclusive and stackable consumables
-**Exclusive** groups: only one buff of the group can be on you, so you pick one in a dropdown and the bar
-gets one button for the group. Hover it to open the list of the whole group (items you carry first):
-**left-click** uses it, **right-click** makes it the group's active one. The list also has **None**
-(right-click it to remove the group's button). Right-clicking the bar button pins the list open.
+**Exclusive** groups: only one buff of the group can be on you, so the bar has one button per group.
+Hover it to open the list of **every** consumable of the group with how many you carry (items in your bags
+first, red 0 for the others):
+**left-click** uses it, **right-click** makes it the group's **default** (green outline in the list). The bar
+button shows the default; left-click it to use the default. Right-clicking the bar button pins the list open.
+
+The group button **glows** while its default's buff is not on you (or is about to run out). Without a default
+it is greyed out and shows how many of the group you carry; a group with no default and nothing in your bags
+has no button. *Show <group> button* in the config hides a group (Off Hand and Tea are off by default), and
+the default can also be picked in the config dropdowns or with `/cm set`.
 
 | Group | Items |
 | --- | --- |
 | Flask | Titans, Distilled Wisdom, Supreme Power, Chromatic Resistance |
-| Food | Le Fishe Au Chocolat, Dirge's Chimaerok Chops, Empowering Herbal Salad, Nightfin Soup, Sour Mountain Berries, Squid Eel Skewer, Grilled Squid, Power Mushroom, Smoked Desert Dumplings, Mightfish Steak, Danonzo's Tel'Abim Delight / Surprise, Runn Tum Tuber Surprise |
+| Food | Le Fishe Au Chocolat, Dirge's Chimaerok Chops, Empowering Herbal Salad, Nightfin Soup, Sour Mountain Berries, Squid Eel Skewer, Grilled Squid, Power Mushroom, Hardened Mushroom, Smoked Desert Dumplings, Mightfish Steak, Danonzo's Tel'Abim Delight / Surprise, Runn Tum Tuber Surprise |
 | Alcohol | Rumsey Rum Black Label, Medivh's Merlot, Medivh's Merlot Blue |
 | Zanza | Spirit, Swiftness, Sheen of Zanza |
 | Strength | Elixir of Giants, Juju Power |
