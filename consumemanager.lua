@@ -281,13 +281,15 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
           id = tonumber(id)
           local item = MatchItem(id, name)
           if item then
-            local icon, count = SlotCount(bag, slot)
+            local icon, count, left = SlotCount(bag, slot)
             local b = bags[item]
             if not b then
               b = { count = 0, bag = bag, slot = slot, icon = icon }
               bags[item] = b
             end
-            b.count = b.count + count
+            -- items with charges (oils, stones): count the charges left, not the items
+            if left ~= count then b.charged = true end
+            b.count = b.count + left
             if id and not item.id then DB().ids[item.key] = id end
           end
         end
@@ -703,7 +705,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
       GameTooltip:SetText(item.name, 1, 1, 1)
     end
     GameTooltip:AddLine(" ")
-    GameTooltip:AddDoubleLine("In bags", Count(item), 1, 1, 1, 1, 1, 1)
+    GameTooltip:AddDoubleLine((b and b.charged) and "Charges in bags" or "In bags", Count(item), 1, 1, 1, 1, 1, 1)
     local left = BuffLeft(item, cat)
     if left == false then
       GameTooltip:AddDoubleLine("Buff", "missing", 1, 1, 1, 1, .3, .3)
