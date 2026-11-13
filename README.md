@@ -21,7 +21,7 @@ the default can also be picked in the config dropdowns or with `/cm set`.
 | Group | Items |
 | --- | --- |
 | Flask | Titans, Distilled Wisdom, Supreme Power, Chromatic Resistance |
-| Food | Le Fishe Au Chocolat, Dirge's Chimaerok Chops, Empowering Herbal Salad, Nightfin Soup, Sour Mountain Berries, Squid Eel Skewer, Grilled Squid, Power Mushroom, Hardened Mushroom, Smoked Desert Dumplings, Mightfish Steak, Danonzo's Tel'Abim Delight / Surprise, Runn Tum Tuber Surprise |
+| Food | Le Fishe Au Chocolat, Dirge's Chimaerok Chops, Empowering Herbal Salad, Nightfin Soup, Sour Mountain Berries, Squid Eel Skewer, Grilled Squid, Power Mushroom, Hardened Mushroom, Smoked Desert Dumplings, Mightfish Steak, Danonzo's Tel'Abim Delight / Surprise, Runn Tum Tuber Surprise, Sweet Watermelon |
 | Alcohol | Rumsey Rum Black Label, Medivh's Merlot, Medivh's Merlot Blue |
 | Zanza | Spirit, Swiftness, Sheen of Zanza |
 | Strength | Elixir of Giants, Juju Power, Concoction of the Arcane Giant |

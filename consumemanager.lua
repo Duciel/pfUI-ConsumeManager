@@ -68,6 +68,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     { key = "delight",     cat = "food", name = "Danonzo's Tel'Abim Delight" },
     { key = "surprise",    cat = "food", name = "Danonzo's Tel'Abim Surprise" },
     { key = "runntum",     cat = "food", name = "Runn Tum Tuber Surprise", id = 18254 },
+    { key = "watermelon",  cat = "food", name = "Sweet Watermelon" },
     -- alcohol
     { key = "rumsey",      cat = "drink", name = "Rumsey Rum Black Label", id = 21151 },
     { key = "merlot",      cat = "drink", name = "Medivh's Merlot" },
