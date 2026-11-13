@@ -39,7 +39,8 @@ Frost Power, Fortitude, Major Troll's Blood, Demonslaying), concoctions and prot
 - orange border: the buff has less than *Refresh when less than X minutes left* (default 2)
 - grey icon: the buff is missing; red icon: none in your bags
 - **glow**: every buff-bar button (groups, elixirs, concoctions...) pulses while its buff is missing or
-  about to run out. Protection potions and the potion bar never glow.
+  about to run out, as long as you have some in your bags (out of stock stays red, no glow). Protection
+  potions and the potion bar never glow.
 - bottom right: how many you carry; for items with charges (oils, stones) the total charges left; cooldown
   wheel for potions
 - using an item takes the one with the fewest charges left (oils, stones) or the smallest stack first

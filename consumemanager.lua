@@ -1156,7 +1156,8 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     if b.state ~= state or b.lastcount ~= n then
       b.state, b.lastcount = state, n
       -- glow: buff-bar buttons of buffs you keep up (not the potion bar, not protection potions)
-      if cfg.glow == "1" and cat.auto and not b:GetParent().potion
+      -- (out of stock: no glow, the icon stays red)
+      if cfg.glow == "1" and cat.auto and not b:GetParent().potion and n > 0
         and (state == "missing" or state == "low") then
         b.glow:Show()
       else
