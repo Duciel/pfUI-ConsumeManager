@@ -66,6 +66,10 @@ buff (flask, food, alcohol, zanza, Blasted Lands, elixirs, weapon oil / stone) y
 about to run out. One item per key press. Weapon oils / stones are applied to the right weapon and the
 "replace enchant" confirmation is accepted for you.
 
+A concoction also counts as the elixir inside it: with *Concoction of the Arcane Giant* up, *Greater
+Arcane Elixir* counts as up too (no glow, skipped by `/cm all`). Same for *Concoction of the Dreamwater* →
+*Dreamtonic* and *Concoction of the Emerald Mongoose* → *Dreamshard Elixir*.
+
 ## Buff detection
 With [nampower](https://github.com/brues-code/nampower) the buff is found through the item's spell id, so it
 works for any client language and for Turtle WoW custom items. Without it, the buff name is used. When

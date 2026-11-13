@@ -43,6 +43,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     { key = "potion",      label = "Potions & Utility",                     potionbar = true },
   }
 
+  -- covers = item keys whose buff this one also gives (a concoction counts as its elixir)
   -- name = English item name (matched exactly, or as the start of the item name),
   -- id = item id when known (Turtle WoW customs are found by name and their id is remembered),
   -- buff = buff names when they differ from the item name, nobuff = nothing to track
@@ -78,14 +79,14 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     -- strength
     { key = "giants",      cat = "strength", name = "Elixir of Giants", id = 9206, buff = { "elixir of the giants" } },
     { key = "jujupower",   cat = "strength", name = "Juju Power", id = 12451 },
-    { key = "arcanegiant", cat = "strength", name = "Concoction of the Arcane Giant" },
+    { key = "arcanegiant", cat = "strength", name = "Concoction of the Arcane Giant", covers = { "gae" } },
     -- attack power
     { key = "firewater",   cat = "attackpower", name = "Winterfall Firewater", id = 12820 },
     { key = "jujumight",   cat = "attackpower", name = "Juju Might", id = 12460 },
-    { key = "dreamwater",  cat = "attackpower", name = "Concoction of the Dreamwater" },
+    { key = "dreamwater",  cat = "attackpower", name = "Concoction of the Dreamwater", covers = { "dreamtonic" } },
     -- agility
     { key = "mongoose",    cat = "agility", name = "Elixir of the Mongoose", id = 13452 },
-    { key = "emeraldmongoose", cat = "agility", name = "Concoction of the Emerald Mongoose" },
+    { key = "emeraldmongoose", cat = "agility", name = "Concoction of the Emerald Mongoose", covers = { "dreamshard" } },
     -- weapon (main hand / off hand share this list)
     { key = "wizardoil",   cat = "weapon", name = "Brilliant Wizard Oil", id = 20749 },
     { key = "manaoil",     cat = "weapon", name = "Brilliant Mana Oil", id = 20748 },
@@ -475,7 +476,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
   end
 
   -- returns nil (no buff to track), false (missing) or the seconds left (0 = no duration)
-  local function BuffLeft(item, cat)
+  local function OwnBuffLeft(item, cat)
     local now = GetTime()
     if cat and cat.weapon then
       local hasMH, mhExp, _, hasOH, ohExp = GetWeaponEnchantInfo()
@@ -515,6 +516,28 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
       end
     end
     return false
+  end
+
+  -- items whose buff also counts for an item: { [item key] = { covering items } }
+  local coveredBy = {}
+  for _, item in ipairs(ITEMS) do
+    for _, key in ipairs(item.covers or {}) do
+      coveredBy[key] = coveredBy[key] or {}
+      table.insert(coveredBy[key], item)
+    end
+  end
+
+  -- the item's own buff, or the buff of an item that covers it (Concoction of the Arcane Giant
+  -- for Greater Arcane Elixir...), whichever lasts longest
+  local function BuffLeft(item, cat)
+    local left = OwnBuffLeft(item, cat)
+    if left == nil or left == 0 or not coveredBy[item.key] then return left end
+    for _, other in ipairs(coveredBy[item.key]) do
+      local l = OwnBuffLeft(other, catByKey[other.cat])
+      if l == 0 then return 0 end
+      if l and (not left or l > left) then left = l end
+    end
+    return left
   end
 
   -- true when the buff is up and not about to run out
