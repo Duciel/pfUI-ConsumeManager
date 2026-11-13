@@ -27,12 +27,12 @@ the default can also be picked in the config dropdowns or with `/cm set`.
 | Strength | Elixir of Giants, Juju Power |
 | Attack Power | Winterfall Firewater, Juju Might |
 | Main Hand / Off Hand | Brilliant Wizard / Mana Oil, Elemental / Consecrated / Dense Sharpening Stone, Blessed Wizard Oil, Frost Oil, Shadow Oil, Dense Weightstone |
+| Blasted Lands | Ground Scorpok Assay, R.O.I.D.S., Cerebral Cortex Compound, Lung Juice Cocktail, Gizzard Gum |
 | Tea | Nordanaar Herbal Tea, Tea With Sugar |
 
 **Stackable** consumables each get a checkbox and their own button: elixirs (Mongoose, Greater Arcane,
 Superior Defense, Mageblood, Dreamshard, Dreamtonic, Greater Firepower, Greater Nature Power, Shadow Power,
-Frost Power, Fortitude, Major Troll's Blood, Demonslaying), Blasted Lands buffs (Scorpok, R.O.I.D.S.,
-Cerebral Cortex, Lung Juice, Gizzard Gum), concoctions, protection potions and potions / utility
+Frost Power, Fortitude, Major Troll's Blood, Demonslaying), concoctions, protection potions and potions / utility
 (Stoneshield, Free Action, LIP, Quickness, Restorative, healing / mana potions, runes, Anti-Venom,
 Jungle Remedy, Holy Water, bandages, Frozen Rune...).
 
@@ -47,7 +47,7 @@ potions are never hidden that way (they are used on demand).
 
 ## Use next missing
 Key binding *pfUI Consume Manager → Use next missing consumable* or `/cm next` uses the first persistent
-buff (flask, food, alcohol, zanza, elixirs, Blasted Lands, weapon oil / stone) you are missing or that is
+buff (flask, food, alcohol, zanza, Blasted Lands, elixirs, weapon oil / stone) you are missing or that is
 about to run out. One item per key press. Weapon oils / stones are applied to the right weapon and the
 "replace enchant" confirmation is accepted for you.
 

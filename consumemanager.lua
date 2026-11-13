@@ -6,7 +6,7 @@
 --       left-click  -> use it
 --       right-click -> make it the group's default (the one the bar button uses)
 --     the group button glows while the default's buff is not on you
---   * stackable consumables (elixirs, Blasted Lands buffs, protection potions...) get one button each
+--   * stackable consumables (elixirs, protection potions...) get one button each
 --   * a button is lit (coloured border, timer) while its buff is on you and dimmed while it is missing
 --   * "use next missing" (key binding / macro) uses the first persistent buff you are missing
 --
@@ -34,7 +34,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     { key = "mainhand",    label = "Main Hand",                             excl = true, auto = true, weapon = 16, items = "weapon" },
     { key = "offhand",     label = "Off Hand",                              excl = true, auto = true, weapon = 17, items = "weapon" },
     { key = "elixir",      label = "Elixirs",                               auto = true },
-    { key = "blasted",     label = "Blasted Lands",                         auto = true },
+    { key = "blasted",     label = "Blasted Lands",                         excl = true, auto = true },
     { key = "concoction",  label = "Concoctions",                           auto = true },
     { key = "tea",         label = "Tea",                                   excl = true },
     { key = "protection",  label = "Protection Potions" },
