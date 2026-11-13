@@ -295,6 +295,10 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     return icon, count, count
   end
 
+  -- item spell ids (see ItemSpells), declared here so a bag scan can reset an item
+  local spellCache = {}
+  local spellRetry = {}   -- item -> GetTime() before which an unknown item is not looked up again
+
   local function ScanBags()
     bags = {}
     for bag = 0, 4 do
@@ -315,7 +319,10 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
             -- items with charges (oils, stones): count the charges left, not the items
             if left ~= count then b.charged = true end
             b.count = b.count + left
-            if id and not item.id then DB().ids[item.key] = id end
+            if id and not item.id and DB().ids[item.key] ~= id then
+              DB().ids[item.key] = id
+              spellCache[item], spellRetry[item] = nil, nil   -- look its spells up with the new id
+            end
           end
         end
       end
@@ -364,12 +371,20 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
 
   -- [[ buffs ]] --
   -- spell ids of an item's use effect and of the spells those trigger (nampower)
-  local spellCache = {}
+  local EMPTY = {}
+
   local function ItemSpells(item)
     if spellCache[item] then return spellCache[item] end
+    if not HAS_NAMPOWER then spellCache[item] = EMPTY return EMPTY end
+    if spellRetry[item] and GetTime() < spellRetry[item] then return EMPTY end
     local list = {}
     local id = ItemId(item)
-    if HAS_NAMPOWER and id then
+    if not id then
+      -- Turtle item never seen in the bags yet: its id comes with the next bag scan
+      spellRetry[item] = GetTime() + 10
+      return EMPTY
+    end
+    do
       local ok, spells = pcall(GetItemStatsField, id, "spellID")
       if ok and type(spells) == "table" then
         for _, sid in pairs(spells) do
@@ -384,7 +399,8 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
           end
         end
       elseif not ok or spells == nil then
-        return list   -- item not loaded yet: don't cache
+        spellRetry[item] = GetTime() + 10   -- item not loaded yet: try again later
+        return EMPTY
       end
     end
     spellCache[item] = list
@@ -606,7 +622,10 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
 
   -- every button a bar should have, in order: { cat, item }
   -- potion = true: potion bar, false: buff bar, nil: both
-  local function Wanted(potion)
+  -- Wanted() only depends on the config: cached until RefreshAll() (or the 5s safety refresh)
+  local wantedVersion, wantedCache = 1, {}
+
+  local function BuildWanted(potion)
     local list = {}
     for _, cat in ipairs(CATS) do
       if potion ~= nil and (cat.potionbar and true or false) ~= potion then
@@ -623,6 +642,16 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
       end
     end
     return list
+  end
+
+  local function Wanted(potion)
+    local key = (potion == nil and "all") or (potion and "potion" or "buff")
+    local c = wantedCache[key]
+    if not c or c.version ~= wantedVersion then
+      c = { version = wantedVersion, list = BuildWanted(potion) }
+      wantedCache[key] = c
+    end
+    return c.list
   end
 
   -- how many items of the group you carry
@@ -781,6 +810,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
   local potbar = NewBar("pfConsumeManagerPotions", true, "pot_")
 
   local function RefreshAll()
+    wantedVersion = wantedVersion + 1
     for _, f in ipairs(bars) do f:UpdateConfig() end
   end
 
@@ -1080,18 +1110,31 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
   end
 
   -- which buttons are visible: rebuilt only when this changes
-  local function LayoutSig(self, list)
-    local sig = ShouldShow(self) and "1" or "0"
-    for _, entry in ipairs(list) do
-      if not Hidden(entry) then sig = sig .. entry.cat.key .. ":" .. (entry.item and entry.item.key or NONE) .. "," end
+  -- remembers which buttons are visible, to rebuild a bar only when that changes (no garbage)
+  local function SaveLayout(self, list, visible)
+    self.vlist, self.vshow = list, visible
+    self.vis = self.vis or {}
+    for i, entry in ipairs(list) do
+      self.vis[i] = visible and not Hidden(entry) or false
     end
-    return sig
+  end
+
+  local function LayoutChanged(self, list)
+    if list ~= self.vlist then return true end
+    local visible = ShouldShow(self)
+    if visible ~= self.vshow then return true end
+    if not visible then return false end
+    local vis = self.vis
+    for i, entry in ipairs(list) do
+      if vis[i] ~= (not Hidden(entry)) then return true end
+    end
+    return false
   end
 
   local function UpdateConfig(self)
     local list = Wanted(self.potion)
     local visible = ShouldShow(self)
-    self.sig = LayoutSig(self, list)
+    SaveLayout(self, list, visible)
 
     local size = tonumber(Opt(self, "size")) or 30
     local spacing = tonumber(Opt(self, "spacing")) or 2
@@ -1268,11 +1311,12 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     if (this.full or 0) <= now then
       this.full = now + 5
       buffsDirty = true   -- safety net for missed aura events
+      if not this.potion then wantedVersion = wantedVersion + 1 end   -- and for config edits made elsewhere
     end
     UpdateBuffs()
 
     local list = Wanted(this.potion)
-    if LayoutSig(this, list) ~= this.sig then
+    if LayoutChanged(this, list) then
       this:UpdateConfig()
     end
     for _, b in ipairs(this.buttons) do
@@ -1321,7 +1365,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
             if b.fly:IsShown() then f:BuildFlyout(b) end
           end
         end
-        f.sig = nil
+        f.vlist = nil
       end
     end
     if this.layoutdirty then
@@ -1450,7 +1494,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
         Print("forgot every learned buff.")
       end
     elseif cmd == "scan" then
-      matchCache, spellCache, iconCache = {}, {}, {}
+      matchCache, spellCache, spellRetry, iconCache = {}, {}, {}, {}
       ScanBags()
       RefreshAll()
       Print("bags rescanned.")
