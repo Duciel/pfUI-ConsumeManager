@@ -49,7 +49,7 @@ Frost Power, Fortitude, Major Troll's Blood, Demonslaying), concoctions and prot
 potions are never hidden that way (they are used on demand).
 
 ## Potion bar
-*Potions & Utility* (healing / mana potions, runes, Stoneshield, Free Action, LIP, Quickness, Restorative,
+*Potions & Utility* (healing / mana potions, runes, Conjured Mana Orange, Juicy Kezan Fruitcake, Graccu's Mince Meat Fruitcake, Stoneshield, Free Action, LIP, Quickness, Restorative,
 Swiftness, Invisibility / Lesser Invisibility, Anti-Venom, Jungle Remedy, Holy Water, bandages, Frozen Rune...) are used reactively, so they have
 their own bar, shown **all the time** by default, in and out of combat (or *In Combat Only*). Tick the ones you want under *Potion Bar* in the
 config; it has its own layout options (size, columns / rows, direction).
