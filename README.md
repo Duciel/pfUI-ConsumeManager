@@ -32,9 +32,7 @@ the default can also be picked in the config dropdowns or with `/cm set`.
 
 **Stackable** consumables each get a checkbox and their own button: elixirs (Mongoose, Greater Arcane,
 Superior Defense, Mageblood, Dreamshard, Dreamtonic, Greater Firepower, Greater Nature Power, Shadow Power,
-Frost Power, Fortitude, Major Troll's Blood, Demonslaying), concoctions, protection potions and potions / utility
-(Stoneshield, Free Action, LIP, Quickness, Restorative, healing / mana potions, runes, Anti-Venom,
-Jungle Remedy, Holy Water, bandages, Frozen Rune...).
+Frost Power, Fortitude, Major Troll's Blood, Demonslaying), concoctions and protection potions. Potions & Utility go on the potion bar (below).
 
 ## The buttons
 - green border + timer: the buff is up
@@ -44,6 +42,15 @@ Jungle Remedy, Holy Water, bandages, Frozen Rune...).
 
 *Hide buttons while their buff is up* turns the bar into a "what am I missing" bar. Potions and protection
 potions are never hidden that way (they are used on demand).
+
+## Potion bar
+*Potions & Utility* (healing / mana potions, runes, Stoneshield, Free Action, LIP, Quickness, Restorative,
+Swiftness, Anti-Venom, Jungle Remedy, Holy Water, bandages, Frozen Rune...) are used reactively, so they have
+their own bar, shown **in combat** by default (or always). Tick the ones you want under *Potion Bar* in the
+config; it has its own layout options (size, columns / rows, direction).
+
+The buff bar has **Hide In Combat** (on by default) at the top of the config, so in a fight you only see the
+potion bar. Both bars stay visible in pfUI's unlock mode so you can move them.
 
 ## Use next missing
 Key binding *pfUI Consume Manager → Use next missing consumable* or `/cm next` uses the first persistent

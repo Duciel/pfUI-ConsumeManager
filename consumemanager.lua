@@ -9,6 +9,7 @@
 --   * stackable consumables (elixirs, protection potions...) get one button each
 --   * a button is lit (coloured border, timer) while its buff is on you and dimmed while it is missing
 --   * "use next missing" (key binding / macro) uses the first persistent buff you are missing
+--   * potions & utility (used reactively) live on their own bar, shown in combat by default
 --
 -- Buff detection uses nampower when it is there (item spell ids -> aura spell ids), the buff names
 -- otherwise. Buffs that can't be guessed are learned the first time you use the item from the bar.
@@ -163,7 +164,18 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
   -- [[ default configuration ]] --
   local defaults = {
     enable    = "1",
+    hidecombat = "1",         -- hide the buff bar in combat
     showwhen  = "always",     -- always / group / raid / instance
+    -- potion bar (Potions & Utility)
+    pot_enable    = "1",
+    pot_showwhen  = "combat", -- always / combat
+    pot_size      = "30",
+    pot_spacing   = "2",
+    pot_perrow    = "12",
+    pot_rows      = "0",
+    pot_direction = "HORIZONTAL",
+    pot_flyout    = "TOP",
+    pot_showbg    = "1",
     hideup    = "0",          -- hide buttons whose buff is up (persistent buffs only)
     hidemissing = "0",        -- hide buttons of consumables you don't carry
     glow      = "1",          -- group buttons glow while the default's buff is missing
@@ -519,11 +531,17 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     return cfg["use_" .. item.key] == "1"
   end
 
-  -- every button the bar should have, in order: { cat, item }
-  local function Wanted()
+  -- the potion bar holds this category, the buff bar everything else
+  local POTION_CAT = "potion"
+
+  -- every button a bar should have, in order: { cat, item }
+  -- potion = true: potion bar, false: buff bar, nil: both
+  local function Wanted(potion)
     local list = {}
     for _, cat in ipairs(CATS) do
-      if cat.excl then
+      if potion ~= nil and (cat.key == POTION_CAT) ~= potion then
+        -- other bar
+      elseif cat.excl then
         -- a group button is there even without a default: its list is where you pick one
         if cfg["show_" .. cat.key] == "1" then
           table.insert(list, { cat = cat, item = Selected(cat), group = true })
@@ -566,7 +584,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
   end
 
   local function UseNextMissing()
-    for _, entry in ipairs(Wanted()) do
+    for _, entry in ipairs(Wanted(false)) do
       local item, cat = entry.item, entry.cat
       if item and cat.auto and Count(item) > 0 then
         local left = BuffLeft(item, cat)
@@ -578,8 +596,23 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     return false
   end
 
-  local function ShouldShow()
+  local function InCombat()
+    return UnitAffectingCombat("player") and true or false
+  end
+
+  -- pfUI unlock mode: keep every bar visible so it can be moved
+  local function Unlocked()
+    return pfUI.unlock and pfUI.unlock:IsShown() and true or false
+  end
+
+  local function ShouldShow(self)
+    if Unlocked() then return true end
+    if self and self.potion then
+      if cfg.pot_enable ~= "1" then return false end
+      return cfg.pot_showwhen == "always" or InCombat()
+    end
     if cfg.enable ~= "1" then return false end
+    if cfg.hidecombat == "1" and InCombat() then return false end
     local when = cfg.showwhen
     if when == "raid" then return GetNumRaidMembers() > 0 end
     if when == "group" then return (GetNumRaidMembers() > 0 or GetNumPartyMembers() > 0) end
@@ -593,9 +626,25 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     return true
   end
 
-  -- [[ the bar ]] --
-  local bar = CreateFrame("Frame", "pfConsumeManager", UIParent)
-  bar.buttons = {}
+  -- [[ the bars ]] --
+  -- prefix: config key prefix of the bar's layout options
+  local bars = {}
+  local function NewBar(name, potion, prefix)
+    local f = CreateFrame("Frame", name, UIParent)
+    f.buttons, f.potion, f.prefix = {}, potion, prefix
+    table.insert(bars, f)
+    return f
+  end
+  local bar = NewBar("pfConsumeManager", false, "")
+  local potbar = NewBar("pfConsumeManagerPotions", true, "pot_")
+
+  local function RefreshAll()
+    for _, f in ipairs(bars) do f:UpdateConfig() end
+  end
+
+  local function Opt(self, key)
+    return cfg[self.prefix .. key]
+  end
 
   local function DefaultBorder(button)
     button:SetBackdropBorderColor(GetStringColor(pfUI_config.appearance.border.color))
@@ -672,7 +721,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
 
   local function SetSelected(cat, key)
     cfg["sel_" .. cat.key] = key
-    bar:UpdateConfig()
+    RefreshAll()
   end
 
   -- flyout buttons
@@ -721,7 +770,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
           fly.pinned = nil
           fly:Hide()
         else
-          bar:BuildFlyout(this)
+          this:GetParent():BuildFlyout(this)
           fly.pinned = true
           fly.leave = nil
           fly:Show()
@@ -737,7 +786,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     local entry = this.entry
     if not entry then return end
     if entry.group and cfg.hover == "1" then
-      bar:BuildFlyout(this)
+      this:GetParent():BuildFlyout(this)
       this.fly.leave = nil
       this.fly:Show()
     end
@@ -749,14 +798,15 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     GameTooltip:Hide()
   end
 
-  local function GetBarButton(i)
-    local b = bar.buttons[i]
+  local function GetBarButton(owner, i)
+    local b = owner.buttons[i]
     if b then return b end
-    b = CreateButton("pfConsumeManagerButton" .. i, bar)
+    local name = owner:GetName() .. "Button" .. i
+    b = CreateButton(name, owner)
 
     b.cdbg = CreateFrame("Frame", nil, b)
     b.cdbg:SetPoint("CENTER", b, "CENTER", 0, 0)
-    b.cd = CreateFrame(COOLDOWN_FRAME_TYPE or "Model", "pfConsumeManagerButton" .. i .. "Cooldown", b.cdbg, "CooldownFrameTemplate")
+    b.cd = CreateFrame(COOLDOWN_FRAME_TYPE or "Model", name .. "Cooldown", b.cdbg, "CooldownFrameTemplate")
     b.cd.pfCooldownType = "ALL"
 
     b.textframe = CreateFrame("Frame", nil, b)
@@ -795,11 +845,11 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     b.fly:SetScript("OnUpdate", FlyoutOnUpdate)
     b.fly:Hide()
 
-    bar.buttons[i] = b
+    owner.buttons[i] = b
     return b
   end
 
-  function bar:BuildFlyout(b)
+  local function BuildFlyout(self, b)
     local cat = b.entry.cat
     local fly = b.fly
     local chosen = Selected(cat)
@@ -809,7 +859,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     for _, item in ipairs(CatItems(cat)) do if Count(item) == 0 then table.insert(list, item) end end
     table.insert(list, NONE)
 
-    local size, spacing, dir = self.size, self.spacing, cfg.flyout
+    local size, spacing, dir = self.size, self.spacing, Opt(self, "flyout")
     local count = table.getn(list)
     local step = size + spacing
 
@@ -883,40 +933,41 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
   end
 
   -- which buttons are visible: rebuilt only when this changes
-  local function LayoutSig(list)
-    local sig = ShouldShow() and "1" or "0"
+  local function LayoutSig(self, list)
+    local sig = ShouldShow(self) and "1" or "0"
     for _, entry in ipairs(list) do
       if not Hidden(entry) then sig = sig .. entry.cat.key .. ":" .. (entry.item and entry.item.key or NONE) .. "," end
     end
     return sig
   end
 
-  function bar:UpdateConfig()
-    local list = Wanted()
-    self.sig = LayoutSig(list)
+  local function UpdateConfig(self)
+    local list = Wanted(self.potion)
+    local visible = ShouldShow(self)
+    self.sig = LayoutSig(self, list)
 
-    local size = tonumber(cfg.size) or 30
-    local spacing = tonumber(cfg.spacing) or 2
-    local horizontal = cfg.direction ~= "VERTICAL"
+    local size = tonumber(Opt(self, "size")) or 30
+    local spacing = tonumber(Opt(self, "spacing")) or 2
+    local horizontal = Opt(self, "direction") ~= "VERTICAL"
     self.size, self.spacing = size, spacing
 
     -- buttons per line: from "Rows" when set, else "Buttons Per Row"
     local total = 0
-    if ShouldShow() then
+    if visible then
       for _, entry in ipairs(list) do
         if not Hidden(entry) then total = total + 1 end
       end
     end
-    local perrow = math.max(tonumber(cfg.perrow) or 12, 1)
-    local rows = tonumber(cfg.rows) or 0
+    local perrow = math.max(tonumber(Opt(self, "perrow")) or 12, 1)
+    local rows = tonumber(Opt(self, "rows")) or 0
     if rows > 0 then perrow = math.max(math.ceil(total / math.floor(rows)), 1) end
 
     local shown = 0
-    if ShouldShow() then
+    if visible then
       for _, entry in ipairs(list) do
         if not Hidden(entry) then
           shown = shown + 1
-          local b = GetBarButton(shown)
+          local b = GetBarButton(self, shown)
           b.entry = entry
           b:SetWidth(size)
           b:SetHeight(size)
@@ -949,6 +1000,10 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     if shown == 0 then
       self:SetWidth(size + spacing * 2)
       self:SetHeight(size + spacing * 2)
+      if Unlocked() then
+        self:SetAlpha(1)   -- empty bar: still shown so it can be moved
+        return
+      end
       if self.backdrop then self.backdrop:Hide() end
       self:SetAlpha(0)   -- not Hide(): its OnUpdate keeps watching for changes
       return
@@ -962,7 +1017,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     self:SetWidth(horizontal and w or h)
     self:SetHeight(horizontal and h or w)
 
-    if cfg.showbg == "1" then
+    if Opt(self, "showbg") == "1" then
       CreateBackdrop(self)
       self.backdrop:Show()
     elseif self.backdrop then
@@ -1053,7 +1108,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     end
   end
 
-  bar:SetScript("OnUpdate", function()
+  local function BarOnUpdate()
     local now = GetTime()
     if (this.tick or 0) > now then return end
     this.tick = now + .2
@@ -1064,14 +1119,20 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     end
     UpdateBuffs()
 
-    local list = Wanted()
-    if LayoutSig(list) ~= this.sig then
+    local list = Wanted(this.potion)
+    if LayoutSig(this, list) ~= this.sig then
       this:UpdateConfig()
     end
     for _, b in ipairs(this.buttons) do
       if b.entry and b:IsShown() then UpdateButton(b) end
     end
-  end)
+  end
+
+  for _, f in ipairs(bars) do
+    f.BuildFlyout = BuildFlyout
+    f.UpdateConfig = UpdateConfig
+    f:SetScript("OnUpdate", BarOnUpdate)
+  end
 
   -- [[ events ]] --
   local events = CreateFrame("Frame")
@@ -1082,6 +1143,8 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
   events:RegisterEvent("PARTY_MEMBERS_CHANGED")
   events:RegisterEvent("RAID_ROSTER_UPDATE")
   events:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+  events:RegisterEvent("PLAYER_REGEN_DISABLED")
+  events:RegisterEvent("PLAYER_REGEN_ENABLED")
   events:SetScript("OnEvent", function()
     if event == "PLAYER_AURAS_CHANGED" then
       buffsDirty = true
@@ -1098,25 +1161,30 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
       -- bag events come in bursts: scan once per frame
       this.bagdirty = nil
       ScanBags()
-      for _, b in ipairs(bar.buttons) do
-        if b.entry and b:IsShown() then
-          b.icon:SetTexture(EntryIcon(b.entry))
-          b.state = nil
-          if b.fly:IsShown() then bar:BuildFlyout(b) end
+      for _, f in ipairs(bars) do
+        for _, b in ipairs(f.buttons) do
+          if b.entry and b:IsShown() then
+            b.icon:SetTexture(EntryIcon(b.entry))
+            b.state = nil
+            if b.fly:IsShown() then f:BuildFlyout(b) end
+          end
         end
+        f.sig = nil
       end
-      bar.sig = nil
     end
     if this.layoutdirty then
+      -- combat / group changes: rebuild right away (the bars' own check runs every 0.2s)
       this.layoutdirty = nil
-      bar.sig = nil
+      for _, f in ipairs(bars) do f:UpdateConfig() end
     end
   end)
 
   bar:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, 240)
+  potbar:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, 280)
   UpdateMovable(bar, true)
+  UpdateMovable(potbar, true)
   ScanBags()
-  bar:UpdateConfig()
+  RefreshAll()
 
   -- [[ public API ]] --
   local function FindItem(query)
@@ -1158,7 +1226,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     return Use(item, cat)
   end
   _G.pfConsumeManager.Select = SelectInGroup
-  _G.pfConsumeManager.Refresh = function() bar:UpdateConfig() end
+  _G.pfConsumeManager.Refresh = RefreshAll
 
   _G.SLASH_PFCONSUMEMANAGER1 = "/consumemanager"
   _G.SLASH_PFCONSUMEMANAGER2 = "/cm"
@@ -1206,7 +1274,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
     elseif cmd == "scan" then
       matchCache, spellCache, iconCache = {}, {}, {}
       ScanBags()
-      bar:UpdateConfig()
+      RefreshAll()
       Print("bags rescanned.")
     else
       Print("commands:")
@@ -1247,12 +1315,18 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
       end
     end
 
-    local update = function() bar:UpdateConfig() end
+    local potwhen = {
+      "combat:In Combat",
+      "always:Always",
+    }
+
+    local update = function() RefreshAll() end
 
     pfUI.gui.CreateGUIEntry(T["Thirdparty"], "Consume Manager", function()
       local CreateConfig = pfUI.gui.CreateConfig
 
-      CreateConfig(update, "Enable Consume Manager", cfg, "enable", "checkbox")
+      CreateConfig(update, "Enable Consume Manager (Buff Bar)", cfg, "enable", "checkbox")
+      CreateConfig(update, "Hide In Combat", cfg, "hidecombat", "checkbox")
       CreateConfig(update, "Show The Bar", cfg, "showwhen", "dropdown", showwhen)
 
       -- one line per group: name, default dropdown, then a "Show" checkbox after the dropdown
@@ -1292,7 +1366,7 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
       end
 
       for _, cat in ipairs(CATS) do
-        if not cat.excl then
+        if not cat.excl and cat.key ~= POTION_CAT then
           CreateConfig(nil, cat.label, nil, nil, "header")
           for _, item in ipairs(CatItems(cat)) do
             CreateConfig(update, item.name, cfg, "use_" .. item.key, "checkbox")
@@ -1317,6 +1391,22 @@ pfUI:RegisterModule("consumemanager", "vanilla", function()
       CreateConfig(update, "Show Buff Timer", cfg, "timer", "checkbox")
       CreateConfig(update, "Show Item Count", cfg, "count", "checkbox")
       CreateConfig(update, T["Show Background"], cfg, "showbg", "checkbox")
+
+      -- potion bar: used reactively during fights
+      CreateConfig(nil, "Potion Bar (" .. catByKey[POTION_CAT].label .. ")", nil, nil, "header")
+      CreateConfig(update, "Enable Potion Bar", cfg, "pot_enable", "checkbox")
+      CreateConfig(update, "Show The Potion Bar", cfg, "pot_showwhen", "dropdown", potwhen)
+      for _, item in ipairs(CatItems(catByKey[POTION_CAT])) do
+        CreateConfig(update, item.name, cfg, "use_" .. item.key, "checkbox")
+      end
+
+      CreateConfig(nil, "Potion Bar Layout", nil, nil, "header")
+      CreateConfig(update, T["Button Size"], cfg, "pot_size")
+      CreateConfig(update, T["Spacing"], cfg, "pot_spacing", "dropdown", pfUI.gui.dropdowns.spacing)
+      CreateConfig(update, "Buttons Per Row (Columns)", cfg, "pot_perrow")
+      CreateConfig(update, "Rows (0 = use Buttons Per Row)", cfg, "pot_rows")
+      CreateConfig(update, T["Bar Direction"], cfg, "pot_direction", "dropdown", pfUI.gui.dropdowns.orientation)
+      CreateConfig(update, T["Show Background"], cfg, "pot_showbg", "checkbox")
     end)
   end
 end)
